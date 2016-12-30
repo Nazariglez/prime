@@ -18,6 +18,6 @@ func Warn() {
 
 }
 
-func Danger() {
+func Fatal() {
 
 }

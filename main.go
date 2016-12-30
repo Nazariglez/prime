@@ -22,3 +22,5 @@ func Initialize(options *PrimeOptions) error {
 
   return nil
 }
+
+//todo thanks to ajhager && shurcooL in the readme for all the code and examples

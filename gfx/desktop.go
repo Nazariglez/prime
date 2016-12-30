@@ -8,12 +8,12 @@
 package gfx
 
 import (
-  "github.com/go-gl/gl/v2.1/gl"
   "github.com/go-gl/glfw/v3.2/glfw"
   "log"
-  "strings"
-  "fmt"
+
   "github.com/pkg/errors"
+
+  "prime/gfx/gl"
 )
 
 var fragmentShader = `
@@ -35,6 +35,11 @@ void main(){
 }
 `
 
+var triangleData = []float32{
+  -1, -1, 0,
+  1, -1, 0,
+  0, 1, 0,
+}
 
 func initialize() error {
   log.Println("Desktop initialized")
@@ -55,57 +60,35 @@ func initialize() error {
   }
 
   window.MakeContextCurrent()
-  if err := gl.Init(); err != nil {
-    return err
-  }
 
-  var vertexArrayId uint32
-  gl.GenVertexArrays(1, &vertexArrayId)
-  gl.BindVertexArray(vertexArrayId)
-
-  gVertexBufferData := []float32{
-    -1, -1, 0,
-    1, -1, 0,
-    0, 1, 0,
-  }
-
-  var vertexBuffer uint32
-  gl.GenBuffers(1, &vertexBuffer)
-  gl.BindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-
-  sizeOfData := len(gVertexBufferData)*4
-  gl.BufferData(gl.ARRAY_BUFFER, sizeOfData, gl.Ptr(gVertexBufferData), gl.STATIC_DRAW)
-
-  programID, err := CreateProgram(vertexShader, fragmentShader)
+  ctx := gl.NewContext()
+  //ctx.Viewport(0, 0, gfxWidth, gfxHeight) //todo retina issues
+  program, err := CreateProgram(ctx, vertexShader, fragmentShader)
   if err != nil {
-    return err
+    log.Println(err)
+    return nil
   }
-  gl.BindAttribLocation(programID, 0, gl.Str("vertexPosition_modelspace\x00"))
+
+  buff := ctx.CreateBuffer()
+  ctx.BindBuffer(ctx.ARRAY_BUFFER, buff)
+  ctx.BufferData(ctx.ARRAY_BUFFER, triangleData, ctx.STATIC_DRAW)
+
+  ctx.ClearColor(gfxBg[0], gfxBg[1], gfxBg[2], gfxBg[3])
 
 
-  gl.ClearColor(gfxBg[0], gfxBg[1], gfxBg[2], gfxBg[3])
+  //ctx.BindAttribLocation(program, 0, ctx.Str("vertexPosition_modelspace\x00")) //todo
 
   for !window.ShouldClose() {
     //draw here
 
-    gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-    gl.UseProgram(programID)
+    ctx.Clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT)
+    ctx.UseProgram(program)
 
-    //1rst attribute buffer : vertices
-    gl.EnableVertexAttribArray(0)
-    gl.BindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-    gl.VertexAttribPointer(
-      0, //attribute 0. No particular reason fo 0, but must match the layout in the shader
-      3, //size
-      gl.FLOAT, //type
-      false, //normalized?
-      0, //stride
-      nil, //array buffer offset
-    )
-
-    //draw the triangle!
-    gl.DrawArrays(gl.TRIANGLES, 0, 3) //starting from vertex 0; 3 vertices total -> 1 triangle
-    gl.DisableVertexAttribArray(0)
+    ctx.BindBuffer(ctx.ARRAY_BUFFER, buff)
+    ctx.EnableVertexAttribArray(0)
+    ctx.VertexAttribPointer(0, 3, ctx.FLOAT, false, 0, 0)
+    ctx.DrawArrays(ctx.TRIANGLES, 0, 3)
+    ctx.DisableVertexAttribArray(0)
 
     window.SwapBuffers()
     glfw.PollEvents()
@@ -115,79 +98,38 @@ func initialize() error {
 }
 
 
-func CreateProgram(v, f string) (uint32, error) {
-  var invalid bool
+func CreateProgram(ctx *gl.Context, v, f string) (*gl.Program, error) {
+  program := ctx.CreateProgram()
 
-  //create the shaders
-  vertexShaderID := gl.CreateShader(gl.VERTEX_SHADER)
-  fragmentShaderID := gl.CreateShader(gl.FRAGMENT_SHADER)
+  vertexShader := ctx.CreateShader(ctx.VERTEX_SHADER)
+  ctx.ShaderSource(vertexShader, v)
+  ctx.CompileShader(vertexShader)
 
-  //read the shader code from the file
-  vertexShaderCode := v+"\x00"
-  fragmentShaderCode := f+"\x00"
-
-  var result int32
-  var infoLogLength int32
-
-  //compile vertex shader
-  vertexSourcePointer, free := gl.Strs(vertexShaderCode)
-  defer free()
-
-  gl.ShaderSource(vertexShaderID, 1, vertexSourcePointer, nil)
-  gl.CompileShader(vertexShaderID)
-
-  //check vertex shader
-  gl.GetShaderiv(vertexShaderID, gl.COMPILE_STATUS, &result)
-  gl.GetShaderiv(vertexShaderID, gl.INFO_LOG_LENGTH, &infoLogLength)
-  if result != gl.TRUE && infoLogLength > 0 {
-    errorLog := strings.Repeat("\x00", int(infoLogLength+1))
-    gl.GetShaderInfoLog(vertexShaderID, infoLogLength, nil, gl.Str(errorLog))
-    fmt.Printf("[%s]:\n%s\n", v, errorLog)
-    invalid = true
+  if !ctx.GetShaderParameterb(vertexShader, ctx.COMPILE_STATUS) {
+    defer ctx.DeleteShader(vertexShader)
+    return &gl.Program{}, errors.New("Shader compile: " + ctx.GetShaderInfoLog(vertexShader))
   }
 
-  //compile fragment shader
-  fragmentSourcePointer, free := gl.Strs(fragmentShaderCode)
-  defer free()
+  fragmentShader := ctx.CreateShader(ctx.FRAGMENT_SHADER)
+  ctx.ShaderSource(fragmentShader, f)
+  ctx.CompileShader(fragmentShader)
 
-  gl.ShaderSource(fragmentShaderID, 1, fragmentSourcePointer, nil)
-  gl.CompileShader(fragmentShaderID)
-
-  //check fragment shader
-  gl.GetShaderiv(fragmentShaderID, gl.COMPILE_STATUS, &result)
-  gl.GetShaderiv(fragmentShaderID, gl.INFO_LOG_LENGTH, &infoLogLength)
-  if result != gl.TRUE && infoLogLength > 0 {
-    errorLog := strings.Repeat("\x00", int(infoLogLength+1))
-    gl.GetShaderInfoLog(fragmentShaderID, infoLogLength, nil, gl.Str(errorLog))
-    fmt.Printf("[%s]:\n%s\n", f, errorLog)
-    invalid = true
+  if !ctx.GetShaderParameterb(fragmentShader, ctx.COMPILE_STATUS) {
+    defer ctx.DeleteShader(fragmentShader)
+    return &gl.Program{}, errors.New("Shader compile: " + ctx.GetShaderInfoLog(fragmentShader))
   }
 
-  //link the program
-  programID := gl.CreateProgram()
-  gl.AttachShader(programID, vertexShaderID)
-  gl.AttachShader(programID, fragmentShaderID)
-  gl.LinkProgram(programID)
+  ctx.AttachShader(program, vertexShader)
+  ctx.AttachShader(program, fragmentShader)
+  ctx.LinkProgram(program)
 
-  //check the program
-  gl.GetProgramiv(programID, gl.LINK_STATUS, &result)
-  gl.GetProgramiv(programID, gl.INFO_LOG_LENGTH, &infoLogLength)
-  if result != gl.TRUE && infoLogLength > 0 {
-    errorLog := strings.Repeat("\x00", int(infoLogLength+1))
-    gl.GetProgramInfoLog(programID, infoLogLength, nil, gl.Str(errorLog))
-    fmt.Printf("[%s]:\n%s\n", "Program", errorLog)
-    invalid = true
+  ctx.DeleteShader(vertexShader)
+  ctx.DeleteShader(fragmentShader)
+
+  if !ctx.GetProgramParameterb(program, ctx.LINK_STATUS) {
+    defer ctx.DeleteProgram(program)
+    return &gl.Program{}, errors.New("GL Program: " + ctx.GetProgramInfoLog(program))
   }
 
-  gl.DetachShader(programID, vertexShaderID)
-  gl.DetachShader(programID, fragmentShaderID)
-
-  gl.DeleteShader(vertexShaderID)
-  gl.DeleteShader(fragmentShaderID)
-
-  if invalid {
-    return 0, errors.New("Invalid shader.")
-  }
-
-  return programID, nil
+  return program, nil
 }
