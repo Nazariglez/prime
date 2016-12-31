@@ -19,6 +19,8 @@ import (
   "golang.org/x/mobile/exp/f32"
   "golang.org/x/mobile/exp/gl/glutil"
   "golang.org/x/mobile/gl"
+
+  gl2 "prime/gfx/gl"
 )
 
 var (
@@ -38,13 +40,48 @@ var (
 func initialize() error {
   log.Println("Mobile initialized")
 
-  run()
+
+
+  //run()
   return nil
+}
+
+func run2() {
+  app.Main(func(a app.App){
+    var ctx *gl2.Context
+    var sz size.Event
+
+    for e := range a.Events() {
+
+      switch e := a.Filter(e).(type) {
+
+      case lifecycle.Event:
+
+        switch e.Crosses(lifecycle.StageVisible) {
+
+        case lifecycle.CrossOn:
+          ctx = gl2.NewContext(e.DrawContext)
+
+        }
+
+      case size.Event:
+
+      case paint.Event:
+
+      case touch.Event:
+
+      }
+
+    }
+
+
+  })
 }
 
 func run() {
   app.Main(func(a app.App) {
     var glctx gl.Context
+
     var sz size.Event
     for e := range a.Events() {
       switch e := a.Filter(e).(type) {
