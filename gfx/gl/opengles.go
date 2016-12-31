@@ -440,23 +440,23 @@ func (c *Context) BufferData(target int, data interface{}, usage int) {
   //gl2.BufferData(uint32(target), int(s), gl2.Ptr(data), uint32(usage))
   switch b := data.(type) {
   case []float32:
-    c.ctx.BufferData(gl2.Enum(target), f32.Bytes(binary.LittleEndian, b), gl2.Enum(usage))
+    c.ctx.BufferData(gl2.Enum(target), f32.Bytes(binary.LittleEndian, b...), gl2.Enum(usage))
   default:
     log.Fatal("Invalid Buffer Type") //todo support []uint16?
   }
 }
 
 func (c *Context) EnableVertexAttribArray(index int) {
-  c.ctx.EnableVertexAttribArray(gl2.Attrib(index)) //todo convert to unit before?
+  c.ctx.EnableVertexAttribArray(gl2.Attrib{uint(index)})
 }
 
 func (c *Context) DisableVertexAttribArray(index int) {
-  c.ctx.DisableVertexAttribArray(gl2.Attrib(index)) //todo convert to unit before?
+  c.ctx.DisableVertexAttribArray(gl2.Attrib{uint(index)})
 }
 
 func (c *Context) VertexAttribPointer(index, size, typ int, normal bool, stride, offset int) {
   //gl2.VertexAttribPointer(uint32(index), int32(size), uint32(typ), normal, int32(stride), gl2.PtrOffset(offset))
-  c.ctx.VertexAttribPointer(gl2.Attrib(index), size, gl2.Enum(typ), normal, stride, offset)
+  c.ctx.VertexAttribPointer(gl2.Attrib{uint(index)}, size, gl2.Enum(typ), normal, stride, offset)
 }
 
 func (c *Context) Enable(flag int) {
@@ -506,7 +506,7 @@ func (c *Context) BufferSubData(target int, offset int, data interface{}) {
 
   switch b := data.(type) {
   case []float32:
-    c.ctx.BufferSubData(gl2.Enum(target), offset, f32.Bytes(binary.LittleEndian, b))
+    c.ctx.BufferSubData(gl2.Enum(target), offset, f32.Bytes(binary.LittleEndian, b...))
 
   default:
     log.Fatal("Invalid Buffer Type") //todo support []uint16?
