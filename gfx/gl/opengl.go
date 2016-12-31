@@ -8,7 +8,6 @@ package gl
 
 import (
   "image"
-  "log"
   "reflect"
 
   gl2 "github.com/go-gl/gl/v2.1/gl"
@@ -317,9 +316,9 @@ type Context struct {
   ZERO                                         int
 }
 
-func NewContext() *Context {
+func NewContext() (*Context, error) {
   if err := gl2.Init(); err != nil {
-    log.Fatal(err)
+    return nil, err
   }
   return &Context{
     ARRAY_BUFFER:               gl2.ARRAY_BUFFER,
@@ -607,7 +606,7 @@ func NewContext() *Context {
     VERTEX_SHADER:                      gl2.VERTEX_SHADER,
     VIEWPORT:                           gl2.VIEWPORT,
     ZERO:                               gl2.ZERO,
-  }
+  }, nil
 }
 
 func (c *Context) CreateShader(typ int) *Shader {

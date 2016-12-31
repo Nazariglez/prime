@@ -61,12 +61,15 @@ func initialize() error {
 
   window.MakeContextCurrent()
 
-  ctx := gl.NewContext()
+  ctx, err := gl.NewContext()
+  if err != nil {
+    return err
+  }
+
   //ctx.Viewport(0, 0, gfxWidth, gfxHeight) //todo retina issues
   program, err := CreateProgram(ctx, vertexShader, fragmentShader)
   if err != nil {
-    log.Println(err)
-    return nil
+    return err
   }
 
   buff := ctx.CreateBuffer()
