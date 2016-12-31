@@ -1,29 +1,31 @@
-// +build android
+// Created by nazarigonzalez on 30/12/16.
 
-/**
- * Created by nazarigonzalez on 30/12/16.
- */
+// +build android
 
 package gl
 
 import (
   gl2 "golang.org/x/mobile/gl"
+  "golang.org/x/mobile/exp/f32"
 
   "image"
-  "reflect"
+  "unsafe"
+  "encoding/binary"
+  "log"
 )
 
-type Texture struct{ uint32 }
-type Buffer struct{ uint32 }
-type FrameBuffer struct{ uint32 }
-type RenderBuffer struct{ uint32 }
-type Program struct{ uint32 }
-type UniformLocation struct{ int32 }
-type Shader struct{ uint32 }
+type Texture struct{ gl2.Texture }
+type Buffer struct{ gl2.Buffer }
+type FrameBuffer struct{ gl2.Framebuffer }
+type RenderBuffer struct{ gl2.Renderbuffer }
+type Program struct{ gl2.Program }
+type UniformLocation struct{ gl2.Uniform }
+type Shader struct{ gl2.Shader }
 
 type Context struct {
-  ctx gl2.Context
   BaseContext
+
+  ctx gl2.Context
 }
 
 func NewContext(drawCtx interface{}) (*Context, error) {
@@ -32,7 +34,7 @@ func NewContext(drawCtx interface{}) (*Context, error) {
   return &Context{
     ctx: ctx,
 
-    BaseContext{
+    BaseContext: BaseContext{
       ARRAY_BUFFER:               gl2.ARRAY_BUFFER,
       ARRAY_BUFFER_BINDING:       gl2.ARRAY_BUFFER_BINDING,
       ATTACHED_SHADERS:           gl2.ATTACHED_SHADERS,
@@ -328,85 +330,67 @@ func (c *Context) CreateShader(typ int) *Shader {
 }
 
 func (c *Context) ShaderSource(shader *Shader, source string) {
-  glsource, free := gl2.Strs(source + "\x00")
-  gl2.ShaderSource(shader.uint32, 1, glsource, nil)
-  free()
+  c.ctx.ShaderSource(shader.Shader, source)
 }
 
 func (c *Context) CompileShader(shader *Shader) {
-  gl2.CompileShader(shader.uint32)
+  c.ctx.CompileShader(shader.Shader)
 }
 
 func (c *Context) DeleteShader(shader *Shader) {
-  gl2.DeleteShader(shader.uint32)
+  c.ctx.DeleteShader(shader.Shader)
 }
 
 func (c *Context) CreateProgram() *Program {
-  return &Program{gl2.CreateProgram()}
+  return &Program{c.ctx.CreateProgram()}
 }
 
 func (c *Context) DeleteProgram(program *Program) {
-  gl2.DeleteProgram(program.uint32)
+  c.ctx.DeleteProgram(program.Program)
 }
 
 func (c *Context) AttachShader(program *Program, shader *Shader) {
-  gl2.AttachShader(program.uint32, shader.uint32)
+  c.ctx.AttachShader(program.Program, shader.Shader)
 }
 
 func (c *Context) GetShaderParameterb(shader *Shader, pname int) bool {
-  var r int32
-  gl2.GetShaderiv(shader.uint32, uint32(pname), &r)
-  return r == gl2.TRUE
+  return c.ctx.GetShaderi(shader.Shader, gl2.Enum(pname)) == gl2.TRUE
 }
 
 func (c *Context) GetProgramParameterb(program *Program, pname int) bool {
-  var r int32
-  gl2.GetProgramiv(program.uint32, uint32(pname), &r)
-  return r == gl2.TRUE
+  return c.ctx.GetProgrami(program.Program, gl2.Enum(pname)) == gl2.TRUE
 }
 
 func (c *Context) GetShaderInfoLog(shader *Shader) string {
-  var l int32
-  gl2.GetShaderiv(shader.uint32, gl2.INFO_LOG_LENGTH, &l)
-
-  s := strings.Repeat("\x00", int(l+1))
-  gl2.GetShaderInfoLog(shader.uint32, l, nil, gl2.Str(s))
-  return s
+  return c.ctx.GetShaderInfoLog(shader.Shader)
 }
 
 func (c *Context) GetProgramInfoLog(program *Program) string {
-  var l int32
-  gl2.GetProgramiv(program.uint32, gl2.INFO_LOG_LENGTH, &l)
-
-  s := strings.Repeat("\x00", int(l+1))
-  gl2.GetProgramInfoLog(program.uint32, l, nil, gl2.Str(s))
-  return s
+  return c.ctx.GetProgramInfoLog(program.Program)
 }
 
 func (c *Context) LinkProgram(program *Program) {
-  gl2.LinkProgram(program.uint32)
+  c.ctx.LinkProgram(program.Program)
 }
 
 func (c *Context) CreateTexture() *Texture {
-  var loc uint32
-  gl2.GenTextures(1, &loc)
-  return &Texture{loc}
+  return &Texture{c.ctx.CreateTexture()}
 }
 
 func (c *Context) DeleteTexture(texture *Texture) {
-  gl2.DeleteTextures(1, &[]uint32{texture.uint32}[0])
+  c.ctx.DeleteTexture(texture.Texture)
 }
 
 func (c *Context) BindTexture(target int, texture *Texture) {
   if texture == nil {
-    gl2.BindTexture(uint32(target), 0)
+    c.ctx.BindTexture(gl2.Enum(target), gl2.Texture{})
     return
   }
-  gl2.BindTexture(uint32(target), texture.uint32)
+  c.ctx.BindTexture(gl2.Enum(target), texture.Texture)
 }
 
 func (c *Context) TexParameteri(target int, pname int, param int) {
-  gl2.TexParameteri(uint32(target), uint32(pname), int32(param))
+  c.ctx.TexParameteri(gl2.Enum(target), gl2.Enum(pname), param)
 }
 
 func (c *Context) TexImage2D(target, level, internalFormat, format, kind int, data interface{}) {
@@ -421,62 +405,70 @@ func (c *Context) TexImage2D(target, level, internalFormat, format, kind int, da
     height = img.Bounds().Dy()
     pix = img.Pix
   }
-  gl2.TexImage2D(uint32(target), int32(level), int32(internalFormat), int32(width), int32(height), int32(0), uint32(format), uint32(kind), gl2.Ptr(pix))
+  //todo other types, like rgba
+  //gl2.TexImage2D(uint32(target), int32(level), int32(internalFormat), int32(width), int32(height), int32(0), uint32(format), uint32(kind), gl2.Ptr(pix))
+  c.ctx.TexImage2D(gl2.Enum(target), level, width, height, gl2.Enum(format), gl2.Enum(kind), *(*[]byte)(unsafe.Pointer(&pix)))
 }
 
 func (c *Context) GetAttribLocation(program *Program, name string) int {
-  return int(gl2.GetAttribLocation(program.uint32, gl2.Str(name+"\x00")))
+  //return int(gl2.GetAttribLocation(program.uint32, gl2.Str(name+"\x00")))
+  return int(c.ctx.GetAttribLocation(program.Program, name).Value) //todo add \x00?
 }
 
 func (c *Context) GetUniformLocation(program *Program, name string) *UniformLocation {
-  return &UniformLocation{gl2.GetUniformLocation(program.uint32, gl2.Str(name+"\x00"))}
+  return &UniformLocation{c.ctx.GetUniformLocation(program.Program, name)} //todo add \x00?
 }
 
 func (c *Context) GetError() int {
-  return int(gl2.GetError())
+  return int(c.ctx.GetError())
 }
 
 func (c *Context) CreateBuffer() *Buffer {
-  var loc uint32
-  gl2.GenBuffers(1, &loc)
-  return &Buffer{loc}
+  return &Buffer{c.ctx.CreateBuffer()}
 }
 
 func (c *Context) BindBuffer(target int, buffer *Buffer) {
   if buffer == nil {
-    gl2.BindBuffer(uint32(target), 0)
+    c.ctx.BindBuffer(gl2.Enum(target), gl2.Buffer{})
     return
   }
-  gl2.BindBuffer(uint32(target), buffer.uint32)
+  c.ctx.BindBuffer(gl2.Enum(target), buffer.Buffer)
 }
 
 func (c *Context) BufferData(target int, data interface{}, usage int) {
-  s := uintptr(reflect.ValueOf(data).Len()) * reflect.TypeOf(data).Elem().Size()
-  gl2.BufferData(uint32(target), int(s), gl2.Ptr(data), uint32(usage))
+  //s := uintptr(reflect.ValueOf(data).Len()) * reflect.TypeOf(data).Elem().Size()
+  //gl2.BufferData(uint32(target), int(s), gl2.Ptr(data), uint32(usage))
+  switch b := data.(type) {
+  case []float32:
+    c.ctx.BufferData(gl2.Enum(target), f32.Bytes(binary.LittleEndian, b), gl2.Enum(usage))
+  default:
+    log.Fatal("Invalid Buffer Type") //todo support []uint16?
+  }
 }
 
 func (c *Context) EnableVertexAttribArray(index int) {
-  gl2.EnableVertexAttribArray(uint32(index))
+  c.ctx.EnableVertexAttribArray(gl2.Attrib(index)) //todo convert to unit before?
 }
 
 func (c *Context) DisableVertexAttribArray(index int) {
-  gl2.DisableVertexAttribArray(uint32(index))
+  c.ctx.DisableVertexAttribArray(gl2.Attrib(index)) //todo convert to unit before?
 }
 
-func (c *Context) VertexAttribPointer(index, size, typ int, normal bool, stride int, offset int) {
-  gl2.VertexAttribPointer(uint32(index), int32(size), uint32(typ), normal, int32(stride), gl2.PtrOffset(offset))
+func (c *Context) VertexAttribPointer(index, size, typ int, normal bool, stride, offset int) {
+  //gl2.VertexAttribPointer(uint32(index), int32(size), uint32(typ), normal, int32(stride), gl2.PtrOffset(offset))
+  c.ctx.VertexAttribPointer(gl2.Attrib(index), size, gl2.Enum(typ), normal, stride, offset)
 }
 
 func (c *Context) Enable(flag int) {
-  gl2.Enable(uint32(flag))
+  c.ctx.Enable(gl2.Enum(flag))
 }
 
 func (c *Context) Disable(flag int) {
-  gl2.Disable(uint32(flag))
+  c.ctx.Disable(gl2.Enum(flag))
 }
 
 func (c *Context) BlendFunc(src, dst int) {
-  gl2.BlendFunc(uint32(src), uint32(dst))
+  c.ctx.BlendFunc(gl2.Enum(src), gl2.Enum(dst))
 }
 
 func (c *Context) UniformMatrix4fv(location *UniformLocation, transpose bool, value []float32) {
@@ -484,50 +476,60 @@ func (c *Context) UniformMatrix4fv(location *UniformLocation, transpose bool, va
   //       Perhaps it should be len(value) / 16 or something else?
   //       In OpenGL 2.1 it is a manually supplied parameter, but WebGL does not have it.
   //       Not sure if WebGL automatically deduces it and supports count values greater than 1, or if 1 is always assumed.
-  gl2.UniformMatrix4fv(location.int32, 1, transpose, &value[0])
+  //gl2.UniformMatrix4fv(location.int32, 1, transpose, &value[0])
+  c.ctx.UniformMatrix4fv(location.Uniform, value)
 }
 
 func (c *Context) UseProgram(program *Program) {
   if program == nil {
-    gl2.UseProgram(0)
+    c.ctx.UseProgram(gl2.Program{})
     return
   }
-  gl2.UseProgram(program.uint32)
+  c.ctx.UseProgram(program.Program)
 }
 
 func (c *Context) ValidateProgram(program *Program) {
   if program == nil {
-    gl2.ValidateProgram(0)
+    c.ctx.ValidateProgram(gl2.Program{})
     return
   }
-  gl2.ValidateProgram(program.uint32)
+  c.ctx.ValidateProgram(program.Program)
 }
 
 func (c *Context) Uniform2f(location *UniformLocation, x, y float32) {
-  gl2.Uniform2f(location.int32, x, y)
+  c.ctx.Uniform2f(location.Uniform, x, y)
 }
 
 func (c *Context) BufferSubData(target int, offset int, data interface{}) {
-  size := uintptr(reflect.ValueOf(data).Len()) * reflect.TypeOf(data).Elem().Size()
-  gl2.BufferSubData(uint32(target), offset, int(size), gl2.Ptr(data))
+  //size := uintptr(reflect.ValueOf(data).Len()) * reflect.TypeOf(data).Elem().Size()
+  //gl2.BufferSubData(uint32(target), offset, int(size), gl2.Ptr(data))
+
+  switch b := data.(type) {
+  case []float32:
+    c.ctx.BufferSubData(gl2.Enum(target), offset, f32.Bytes(binary.LittleEndian, b))
+
+  default:
+    log.Fatal("Invalid Buffer Type") //todo support []uint16?
+  }
 }
 
 func (c *Context) DrawArrays(mode, first, count int) {
-  gl2.DrawArrays(uint32(mode), int32(first), int32(count))
+  c.ctx.DrawArrays(gl2.Enum(mode), first, count)
 }
 
 func (c *Context) DrawElements(mode, count, typ, offset int) {
-  gl2.DrawElements(uint32(mode), int32(count), uint32(typ), gl2.PtrOffset(offset))
+  //gl2.DrawElements(uint32(mode), int32(count), uint32(typ), gl2.PtrOffset(offset))
+  c.ctx.DrawElements(gl2.Enum(mode), count, gl2.Enum(typ), offset)
 }
 
 func (c *Context) ClearColor(r, g, b, a float32) {
-  gl2.ClearColor(r, g, b, a)
+  c.ctx.ClearColor(r,g,b,a)
 }
 
 func (c *Context) Viewport(x, y, width, height int) {
-  gl2.Viewport(int32(x), int32(y), int32(width), int32(height))
+  c.ctx.Viewport(x, y, width, height)
 }
 
 func (c *Context) Clear(flags int) {
-  gl2.Clear(uint32(flags))
+  c.ctx.Clear(gl2.Enum(flags))
 }
