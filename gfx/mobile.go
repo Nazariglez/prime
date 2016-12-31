@@ -7,8 +7,8 @@
 package gfx
 
 import (
-  "encoding/binary"
   "log"
+  "errors"
 
   "golang.org/x/mobile/app"
   "golang.org/x/mobile/event/lifecycle"
@@ -16,7 +16,6 @@ import (
   "golang.org/x/mobile/event/size"
   "golang.org/x/mobile/event/touch"
   "golang.org/x/mobile/exp/app/debug"
-  "golang.org/x/mobile/exp/f32"
   "golang.org/x/mobile/exp/gl/glutil"
   "golang.org/x/mobile/gl"
 
@@ -26,11 +25,11 @@ import (
 var (
   images   *glutil.Images
   fps      *debug.FPS
-  program  gl.Program
+  program  *gl2.Program
   position gl.Attrib
   offset   gl.Uniform
   color    gl.Uniform
-  buff gl.Buffer
+  buff *gl2.Buffer
 
   green  float32
   touchX float32
@@ -42,11 +41,11 @@ func initialize() error {
 
 
 
-  //run()
+  run()
   return nil
 }
 
-func run2() {
+func run() {
   app.Main(func(a app.App){
     var ctx *gl2.Context
     var sz size.Event
@@ -60,148 +59,118 @@ func run2() {
         switch e.Crosses(lifecycle.StageVisible) {
 
         case lifecycle.CrossOn:
-          ctx = gl2.NewContext(e.DrawContext)
+          c, err := gl2.NewContext(e.DrawContext)
+          if err != nil {
+            log.Fatal(err)
+            break
+          }
 
-        }
-
-      case size.Event:
-
-      case paint.Event:
-
-      case touch.Event:
-
-      }
-
-    }
-
-
-  })
-}
-
-func run() {
-  app.Main(func(a app.App) {
-    var glctx gl.Context
-
-    var sz size.Event
-    for e := range a.Events() {
-      switch e := a.Filter(e).(type) {
-      case lifecycle.Event:
-        switch e.Crosses(lifecycle.StageVisible) {
-        case lifecycle.CrossOn:
-          glctx, _ = e.DrawContext.(gl.Context)
-          onStart(glctx)
+          ctx = c
+          onStart(ctx)
           a.Send(paint.Event{})
+
         case lifecycle.CrossOff:
-          onStop(glctx)
-          glctx = nil
+          onStop(ctx)
+          ctx = nil
+
         }
+
       case size.Event:
         sz = e
-        touchX = float32(sz.WidthPx / 2)
-        touchY = float32(sz.HeightPx / 2)
       case paint.Event:
-        if glctx == nil || e.External {
-          // As we are actively painting as fast as
-          // we can (usually 60 FPS), skip any paint
-          // events sent by the system.
+        if ctx == nil || e.External {
           continue
         }
 
-        onPaint(glctx, sz)
+        onPaint(ctx, sz)
         a.Publish()
-        // Drive the animation by preparing to paint the next frame
-        // after this one is shown.
         a.Send(paint.Event{})
       case touch.Event:
-        touchX = e.X
-        touchY = e.Y
+
       }
+
     }
+
+
   })
 }
 
-func onStart(glctx gl.Context) {
+func onStart(ctx *gl2.Context) {
   var err error
-  program, err = glutil.CreateProgram(glctx, vertexShader1, fragmentShader1)
+  program, err = CreateProgram(ctx, vertexShader, fragmentShader)
   if err != nil {
     log.Printf("error creating GL program: %v", err)
     return
   }
 
-  buff = glctx.CreateBuffer()
-  glctx.BindBuffer(gl.ARRAY_BUFFER, buff)
-  glctx.BufferData(gl.ARRAY_BUFFER, triangleData, gl.STATIC_DRAW)
-
-  //position = glctx.GetAttribLocation(program, "position")
-  //color = glctx.GetUniformLocation(program, "color")
-  //offset = glctx.GetUniformLocation(program, "offset")
-
-  //images = glutil.NewImages(glctx)
-  //fps = debug.NewFPS(images)
-
-  glctx.ClearColor(gfxBg[0], gfxBg[1], gfxBg[2], gfxBg[3])
-}
-
-func onStop(glctx gl.Context) {
-  glctx.DeleteProgram(program)
-  glctx.DeleteBuffer(buff)
-  //fps.Release()
-  //images.Release()
-}
-
-func onPaint(glctx gl.Context, sz size.Event) {
-  glctx.Clear(gl.COLOR_BUFFER_BIT)
-
-  glctx.UseProgram(program)
-
-  /*green += 0.01
-  if green > 1 {
-    green = 0
+  t := []float32{
+    -1, -1, 0,
+    1, -1, 0,
+    0, 1, 0,
   }
-  glctx.Uniform4f(color, 0, green, 0, 1)
 
-  glctx.Uniform2f(offset, touchX/float32(sz.WidthPx), touchY/float32(sz.HeightPx))
-*/
-  glctx.BindBuffer(gl.ARRAY_BUFFER, buff)
-  glctx.EnableVertexAttribArray(position)
-  glctx.VertexAttribPointer(position, coordsPerVertex, gl.FLOAT, false, 0, 0)
-  glctx.DrawArrays(gl.TRIANGLES, 0, vertexCount)
-  glctx.DisableVertexAttribArray(position)
+  buff = ctx.CreateBuffer()
+  ctx.BindBuffer(ctx.ARRAY_BUFFER, buff)
+  ctx.BufferData(ctx.ARRAY_BUFFER, t, ctx.STATIC_DRAW)
+
+  ctx.ClearColor(gfxBg[0], gfxBg[1], gfxBg[2], gfxBg[3])
+}
+
+func onStop(ctx *gl2.Context) {
+  ctx.DeleteProgram(program)
+  ctx.DeleteBuffer(buff)
+}
+
+func onPaint(ctx *gl2.Context, sz size.Event) {
+  ctx.Clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT)
+  ctx.UseProgram(program)
+
+  ctx.BindBuffer(ctx.ARRAY_BUFFER, buff)
+  ctx.EnableVertexAttribArray(0)
+  ctx.VertexAttribPointer(0, 3, ctx.FLOAT, false, 0, 0)
+  ctx.DrawArrays(ctx.TRIANGLES, 0, 3)
+  ctx.DisableVertexAttribArray(0)
 
   log.Println("PAINT PAINT PAINT")
-
-  //fps.Draw(sz)
 }
 
-var triangleData = f32.Bytes(binary.LittleEndian,
-  -1, -1, 0,
-  1, -1, 0,
-  0, 1, 0,
-)
+func CreateProgram(ctx *gl2.Context, v, f string) (*gl2.Program, error) {
+  program := ctx.CreateProgram()
 
-const (
-  coordsPerVertex = 3
-  vertexCount     = 3
-)
+  vertexShader := ctx.CreateShader(ctx.VERTEX_SHADER)
+  ctx.ShaderSource(vertexShader, v)
+  ctx.CompileShader(vertexShader)
 
-const vertexShader = `#version 100
-uniform vec2 offset;
-attribute vec4 position;
-void main() {
-	// offset comes in with x/y values between 0 and 1.
-	// position bounds are -1 to 1.
-	vec4 offset4 = vec4(2.0*offset.x-1.0, 1.0-2.0*offset.y, 0, 0);
-	gl_Position = position + offset4;
-}`
+  if !ctx.GetShaderParameterb(vertexShader, ctx.COMPILE_STATUS) {
+    defer ctx.DeleteShader(vertexShader)
+    return &gl2.Program{}, errors.New("Shader compile: " + ctx.GetShaderInfoLog(vertexShader))
+  }
 
-const fragmentShader = `#version 100
-precision mediump float;
-uniform vec4 color;
-void main() {
-	gl_FragColor = color;
-}`
+  fragmentShader := ctx.CreateShader(ctx.FRAGMENT_SHADER)
+  ctx.ShaderSource(fragmentShader, f)
+  ctx.CompileShader(fragmentShader)
 
-var fragmentShader1 = `
+  if !ctx.GetShaderParameterb(fragmentShader, ctx.COMPILE_STATUS) {
+    defer ctx.DeleteShader(fragmentShader)
+    return &gl2.Program{}, errors.New("Shader compile: " + ctx.GetShaderInfoLog(fragmentShader))
+  }
+
+  ctx.AttachShader(program, vertexShader)
+  ctx.AttachShader(program, fragmentShader)
+  ctx.LinkProgram(program)
+
+  ctx.DeleteShader(vertexShader)
+  ctx.DeleteShader(fragmentShader)
+
+  if !ctx.GetProgramParameterb(program, ctx.LINK_STATUS) {
+    defer ctx.DeleteProgram(program)
+    return &gl2.Program{}, errors.New("GL Program: " + ctx.GetProgramInfoLog(program))
+  }
+
+  return program, nil
+}
+
+var fragmentShader = `
 //#version 120 // OpenGL 2.1
 
 void main(){
@@ -209,7 +178,7 @@ void main(){
 }
 `
 
-var vertexShader1 = `
+var vertexShader = `
 //#version 120 // OpenGL 2.1
 
 attribute vec3 vertexPosition_modelspace;

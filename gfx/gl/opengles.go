@@ -427,6 +427,10 @@ func (c *Context) CreateBuffer() *Buffer {
   return &Buffer{c.ctx.CreateBuffer()}
 }
 
+func (c *Context) DeleteBuffer(buffer *Buffer) {
+  c.ctx.DeleteBuffer(buffer.Buffer)
+}
+
 func (c *Context) BindBuffer(target int, buffer *Buffer) {
   if buffer == nil {
     c.ctx.BindBuffer(gl2.Enum(target), gl2.Buffer{})

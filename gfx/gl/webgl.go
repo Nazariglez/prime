@@ -1,4 +1,4 @@
-// The original code was done by Joseph Hager under BSD License. (https://github.com/ajhager)
+// The original code was created by Joseph Hager under BSD License. (https://github.com/ajhager)
 // https://github.com/ajhager/webgl/blob/master/webgl_js.go
 
 // +build js
