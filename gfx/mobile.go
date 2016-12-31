@@ -15,31 +15,17 @@ import (
   "golang.org/x/mobile/event/paint"
   "golang.org/x/mobile/event/size"
   "golang.org/x/mobile/event/touch"
-  "golang.org/x/mobile/exp/app/debug"
-  "golang.org/x/mobile/exp/gl/glutil"
-  "golang.org/x/mobile/gl"
 
-  gl2 "prime/gfx/gl"
+  "prime/gfx/gl"
 )
 
 var (
-  images   *glutil.Images
-  fps      *debug.FPS
-  program  *gl2.Program
-  position gl.Attrib
-  offset   gl.Uniform
-  color    gl.Uniform
-  buff *gl2.Buffer
-
-  green  float32
-  touchX float32
-  touchY float32
+  program  *gl.Program
+  buff *gl.Buffer
 )
 
 func initialize() error {
   log.Println("Mobile initialized")
-
-
 
   run()
   return nil
@@ -47,7 +33,7 @@ func initialize() error {
 
 func run() {
   app.Main(func(a app.App){
-    var ctx *gl2.Context
+    var ctx *gl.Context
     var sz size.Event
 
     for e := range a.Events() {
@@ -59,7 +45,7 @@ func run() {
         switch e.Crosses(lifecycle.StageVisible) {
 
         case lifecycle.CrossOn:
-          c, err := gl2.NewContext(e.DrawContext)
+          c, err := gl.NewContext(e.DrawContext)
           if err != nil {
             log.Fatal(err)
             break
@@ -95,7 +81,7 @@ func run() {
   })
 }
 
-func onStart(ctx *gl2.Context) {
+func onStart(ctx *gl.Context) {
   var err error
   program, err = CreateProgram(ctx, vertexShader, fragmentShader)
   if err != nil {
@@ -116,12 +102,12 @@ func onStart(ctx *gl2.Context) {
   ctx.ClearColor(gfxBg[0], gfxBg[1], gfxBg[2], gfxBg[3])
 }
 
-func onStop(ctx *gl2.Context) {
+func onStop(ctx *gl.Context) {
   ctx.DeleteProgram(program)
   ctx.DeleteBuffer(buff)
 }
 
-func onPaint(ctx *gl2.Context, sz size.Event) {
+func onPaint(ctx *gl.Context, sz size.Event) {
   ctx.Clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT)
   ctx.UseProgram(program)
 
@@ -134,7 +120,7 @@ func onPaint(ctx *gl2.Context, sz size.Event) {
   log.Println("PAINT PAINT PAINT")
 }
 
-func CreateProgram(ctx *gl2.Context, v, f string) (*gl2.Program, error) {
+func CreateProgram(ctx *gl.Context, v, f string) (*gl.Program, error) {
   program := ctx.CreateProgram()
 
   vertexShader := ctx.CreateShader(ctx.VERTEX_SHADER)
@@ -143,7 +129,7 @@ func CreateProgram(ctx *gl2.Context, v, f string) (*gl2.Program, error) {
 
   if !ctx.GetShaderParameterb(vertexShader, ctx.COMPILE_STATUS) {
     defer ctx.DeleteShader(vertexShader)
-    return &gl2.Program{}, errors.New("Shader compile: " + ctx.GetShaderInfoLog(vertexShader))
+    return &gl.Program{}, errors.New("Shader compile: " + ctx.GetShaderInfoLog(vertexShader))
   }
 
   fragmentShader := ctx.CreateShader(ctx.FRAGMENT_SHADER)
@@ -152,7 +138,7 @@ func CreateProgram(ctx *gl2.Context, v, f string) (*gl2.Program, error) {
 
   if !ctx.GetShaderParameterb(fragmentShader, ctx.COMPILE_STATUS) {
     defer ctx.DeleteShader(fragmentShader)
-    return &gl2.Program{}, errors.New("Shader compile: " + ctx.GetShaderInfoLog(fragmentShader))
+    return &gl.Program{}, errors.New("Shader compile: " + ctx.GetShaderInfoLog(fragmentShader))
   }
 
   ctx.AttachShader(program, vertexShader)
@@ -164,7 +150,7 @@ func CreateProgram(ctx *gl2.Context, v, f string) (*gl2.Program, error) {
 
   if !ctx.GetProgramParameterb(program, ctx.LINK_STATUS) {
     defer ctx.DeleteProgram(program)
-    return &gl2.Program{}, errors.New("GL Program: " + ctx.GetProgramInfoLog(program))
+    return &gl.Program{}, errors.New("GL Program: " + ctx.GetProgramInfoLog(program))
   }
 
   return program, nil
