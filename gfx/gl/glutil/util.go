@@ -8,25 +8,17 @@ import (
   "prime/gfx/gl"
 )
 
-func CreateProgram(ctx *gl.Context, v, f string) (*gl.Program, error) {
+func CreateProgram(ctx *gl.Context, vertex, fragment string) (*gl.Program, error) {
   program := ctx.CreateProgram()
 
-  vertexShader := ctx.CreateShader(ctx.VERTEX_SHADER)
-  ctx.ShaderSource(vertexShader, v)
-  ctx.CompileShader(vertexShader)
-
-  if !ctx.GetShaderParameterb(vertexShader, ctx.COMPILE_STATUS) {
-    defer ctx.DeleteShader(vertexShader)
-    return &gl.Program{}, errors.New("Shader compile: " + ctx.GetShaderInfoLog(vertexShader))
+  vertexShader, err := loadShader(ctx, ctx.VERTEX_SHADER, vertex)
+  if err != nil {
+    return nil, err
   }
 
-  fragmentShader := ctx.CreateShader(ctx.FRAGMENT_SHADER)
-  ctx.ShaderSource(fragmentShader, f)
-  ctx.CompileShader(fragmentShader)
-
-  if !ctx.GetShaderParameterb(fragmentShader, ctx.COMPILE_STATUS) {
-    defer ctx.DeleteShader(fragmentShader)
-    return &gl.Program{}, errors.New("Shader compile: " + ctx.GetShaderInfoLog(fragmentShader))
+  fragmentShader, err := loadShader(ctx, ctx.FRAGMENT_SHADER, fragment)
+  if err != nil {
+    return nil, err
   }
 
   ctx.AttachShader(program, vertexShader)
@@ -38,8 +30,21 @@ func CreateProgram(ctx *gl.Context, v, f string) (*gl.Program, error) {
 
   if !ctx.GetProgramParameterb(program, ctx.LINK_STATUS) {
     defer ctx.DeleteProgram(program)
-    return &gl.Program{}, errors.New("GL Program: " + ctx.GetProgramInfoLog(program))
+    return nil, errors.New("GL Program: " + ctx.GetProgramInfoLog(program))
   }
 
   return program, nil
+}
+
+func loadShader(ctx *gl.Context, typ int, source string) (*gl.Shader, error) {
+  s := ctx.CreateShader(typ)
+  ctx.ShaderSource(s, source)
+  ctx.CompileShader(s)
+
+  if !ctx.GetShaderParameterb(s, ctx.COMPILE_STATUS) {
+    defer ctx.DeleteShader(s)
+    return nil, errors.New("Shader compile:" + ctx.GetShaderInfoLog(s))
+  }
+
+  return s, nil
 }
