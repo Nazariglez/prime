@@ -1,20 +1,18 @@
-// +build js
+// Created by nazarigonzalez on 29/12/16.
 
-/**
- * Created by nazarigonzalez on 29/12/16.
- */
+// +build js
 
 package gfx
 
 import (
   "log"
   "time"
+  "runtime"
 
   "github.com/gopherjs/gopherjs/js"
   "honnef.co/go/js/dom"
 
   "prime/gfx/gl"
-  "prime/gfx/gl/glutil"
 )
 
 
@@ -30,6 +28,7 @@ var htmlContentLoaded bool
 
 
 func initialize() error {
+  runtime.LockOSThread()
   log.Println("Browser initialized")
 
   doc := dom.GetWindow().Document().(dom.HTMLDocument)
@@ -58,12 +57,6 @@ func initialize() error {
   return nil
 }
 
-var triangleData = []float32{
-  -1, -1, 0,
-  1, -1, 0,
-  0, 1, 0,
-}
-
 func run(canvas *dom.HTMLCanvasElement) error {
   attrs := gl.DefaultAttributes()
   attrs.Alpha = false
@@ -76,39 +69,20 @@ func run(canvas *dom.HTMLCanvasElement) error {
   if err != nil {
     return err
   }
+  gfxContext = ctx
+
+  OnStart()
 
   js.Global.Set("ctx", ctx) //todo remove this
-  ctx.Viewport(0, 0, gfxWidth, gfxHeight)
-
-  program, err := glutil.CreateProgram(ctx, vertexShader, fragmentShader)
-  if err != nil {
-    log.Println(err)
-    return nil
-  }
-
-  buff := ctx.CreateBuffer()
-  ctx.BindBuffer(ctx.ARRAY_BUFFER, buff)
-  ctx.BufferData(ctx.ARRAY_BUFFER, triangleData, ctx.STATIC_DRAW)
-
-  ctx.ClearColor(gfxBg[0], gfxBg[1], gfxBg[2], gfxBg[3])
+  ctx.Viewport(0, 0, gfxWidth, gfxHeight) //todo fix this, retina issues (removed from here)
 
   go func(){
     for {
-      //ctx.ClearColor(rand.Float32(),rand.Float32(),rand.Float32(),0)
-
-      ctx.Enable(ctx.DEPTH_TEST)
-      ctx.Clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT)
-      ctx.UseProgram(program)
-
-      ctx.BindBuffer(ctx.ARRAY_BUFFER, buff)
-      ctx.EnableVertexAttribArray(0)
-      ctx.VertexAttribPointer(0, 3, ctx.FLOAT, false, 0, 0)
-      ctx.DrawArrays(ctx.TRIANGLES, 0, 3)
-      ctx.DisableVertexAttribArray(0)
-
-      //println("lel")
+      OnDraw()
       time.Sleep(33*time.Millisecond)
     }
+
+    OnEnd()
   }()
 
   return nil
@@ -152,24 +126,3 @@ func onLoad(cb func()) func() {
 func isReadyStateComplete() bool {
   return js.Global.Get("document").Get("readyState").String() == "complete"
 }
-
-var fragmentShader = `
-//#version 120 // OpenGL 2.1
-//#version 100 // WebGL 1.0
-
-void main(){
-  gl_FragColor = vec4(1.0, 1.0, 0.0, 0.0);
-}
-`
-
-var vertexShader = `
-//#version 120 // OpenGL 2.1
-//#version 100 // WebGL 1.0
-
-attribute vec3 vertexPosition_modelspace;
-
-void main(){
-  gl_Position.xyz = vertexPosition_modelspace;
-  gl_Position.w = 1.0;
-}
-`
