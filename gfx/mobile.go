@@ -16,6 +16,7 @@ import (
   "golang.org/x/mobile/event/touch"
 
   "prime/gfx/gl"
+  "prime/gfx/gl/glutil"
 )
 
 var (
@@ -82,7 +83,7 @@ func run() {
 
 func onStart(ctx *gl.Context) {
   var err error
-  program, err = CreateProgram(ctx, vertexShader, fragmentShader)
+  program, err = glutil.CreateProgram(ctx, vertexShader, fragmentShader)
   if err != nil {
     log.Printf("error creating GL program: %v", err)
     return

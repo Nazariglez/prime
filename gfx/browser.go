@@ -8,12 +8,13 @@ package gfx
 
 import (
   "log"
+  "time"
 
   "github.com/gopherjs/gopherjs/js"
   "honnef.co/go/js/dom"
 
   "prime/gfx/gl"
-  "time"
+  "prime/gfx/gl/glutil"
 )
 
 
@@ -79,7 +80,7 @@ func run(canvas *dom.HTMLCanvasElement) error {
   js.Global.Set("ctx", ctx) //todo remove this
   ctx.Viewport(0, 0, gfxWidth, gfxHeight)
 
-  program, err := CreateProgram(ctx, vertexShader, fragmentShader)
+  program, err := glutil.CreateProgram(ctx, vertexShader, fragmentShader)
   if err != nil {
     log.Println(err)
     return nil

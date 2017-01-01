@@ -12,6 +12,7 @@ import (
   "log"
 
   "prime/gfx/gl"
+  "prime/gfx/gl/glutil"
 )
 
 var fragmentShader = `
@@ -65,7 +66,7 @@ func initialize() error {
   }
 
   //ctx.Viewport(0, 0, gfxWidth, gfxHeight) //todo retina issues
-  program, err := CreateProgram(ctx, vertexShader, fragmentShader)
+  program, err := glutil.CreateProgram(ctx, vertexShader, fragmentShader)
   if err != nil {
     return err
   }
