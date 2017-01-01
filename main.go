@@ -6,19 +6,20 @@ package prime
 
 import (
   "log"
-  "prime/gfx"
 )
 
 var engineOptions *PrimeOptions
 
 func Initialize(options *PrimeOptions) error {
   log.Println("Starting prime")
-  engineOptions = parseOptions(options)
-  //extend options with default options
 
-  if err := gfx.Init(engineOptions.Width, engineOptions.Height, engineOptions.Title, engineOptions.Background[:]); err != nil {
+  //extend options with default options
+  p, err := runPrime(parseOptions(options))
+  if err != nil {
     log.Fatal(err)
   }
+
+  log.Printf("%+v", p)
 
   return nil
 }

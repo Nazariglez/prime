@@ -5,6 +5,8 @@
 
 package gl
 
+//todo: some methos use interface, but will be fast use custom methods for differentes types
+
 type BaseContext struct {
   ARRAY_BUFFER                                 int `js:"ARRAY_BUFFER"`
   ARRAY_BUFFER_BINDING                         int `js:"ARRAY_BUFFER_BINDING"`
