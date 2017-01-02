@@ -8,12 +8,12 @@ import (
 	"log"
 	"runtime"
 	"time"
+	"strconv"
 
 	"github.com/gopherjs/gopherjs/js"
 	"honnef.co/go/js/dom"
 
 	"prime/gfx/gl"
-	"strconv"
 )
 
 type Texture struct{ *js.Object }
@@ -48,22 +48,7 @@ func initialize() error {
 		canvas.Width = gfxWidth
 		canvas.Height = gfxHeight
 
-		win := dom.GetWindow()
-		wf32 := float32(gfxWidth)
-		hf32 := float32(gfxHeight)
-		ww := float32(win.InnerWidth())/wf32
-		hh := float32(win.InnerHeight())/hf32
-
-		var scale float32
-		if ww < hh {
-			scale = ww
-		} else {
-			scale = hh
-		}
-
-		//todo added more scale modes, NONE, FIT, FILL, ASPECT_FIT
-		canvas.Style().SetProperty("width", strconv.Itoa(int(wf32*scale)) + "px", "")
-		canvas.Style().SetProperty("height", strconv.Itoa(int(hf32*scale)) + "px", "")
+		scaleCanvas(canvas, gfxScale)
 
 		if err := run(canvas); err != nil {
 			log.Println(err)
@@ -102,6 +87,47 @@ func run(canvas *dom.HTMLCanvasElement) error {
 	}()
 
 	return nil
+}
+
+func scaleCanvas(canvas *dom.HTMLCanvasElement, typ int) {
+	var scale float32
+	win := dom.GetWindow()
+	wf32 := float32(gfxWidth)
+	hf32 := float32(gfxHeight)
+	ww := float32(win.InnerWidth())/wf32
+	hh := float32(win.InnerHeight())/hf32
+
+	log.Println("Scale", typ, BROWSER_SCALE_FIT, typ == BROWSER_SCALE_FIT)
+
+	switch typ {
+	case BROWSER_SCALE_FIT:
+		if ww < hh {
+			scale = ww
+		} else {
+			scale = hh
+		}
+
+		canvas.Style().SetProperty("width", strconv.Itoa(int(wf32*scale)) + "px", "")
+		canvas.Style().SetProperty("height", strconv.Itoa(int(hf32*scale)) + "px", "")
+
+	case BROWSER_SCALE_ASPECT_FILL:
+		if ww > hh {
+			scale = ww
+		} else {
+			scale = hh
+		}
+
+		canvas.Style().SetProperty("width", strconv.Itoa(int(wf32*scale)) + "px", "")
+		canvas.Style().SetProperty("height", strconv.Itoa(int(hf32*scale)) + "px", "")
+
+
+	case BROWSER_SCALE_FILL:
+		canvas.Style().SetProperty("width", strconv.Itoa(win.InnerWidth()) + "px", "")
+		canvas.Style().SetProperty("height", strconv.Itoa(win.InnerHeight()) + "px", "")
+
+	}
+
+	//todo onresize event
 }
 
 func onReady(cb func()) {

@@ -11,16 +11,16 @@ import (
 )
 
 var GL *gl.Context
-var currentOptions *PrimeOptions
+var CurrentOpts *PrimeOptions
 
 func runEngine(opts *PrimeOptions) error {
-	currentOptions = opts
+	CurrentOpts = opts
 
 	gfx.OnStart = onGfxStart
 	gfx.OnDraw = onGfxDraw
 	gfx.OnEnd = onGfxEnd
 
-	if err := gfx.Init(opts.Width, opts.Height, opts.Title); err != nil {
+	if err := gfx.Init(opts.Width, opts.Height, opts.Title, opts.BrowserScale); err != nil {
 		return err
 	}
 
@@ -51,10 +51,10 @@ func onGfxStart() {
 	GL.BufferData(GL.ARRAY_BUFFER, triangleData, GL.STATIC_DRAW)
 
 	GL.ClearColor(
-		currentOptions.Background[0],
-		currentOptions.Background[1],
-		currentOptions.Background[2],
-		currentOptions.Background[3],
+		CurrentOpts.Background[0],
+		CurrentOpts.Background[1],
+		CurrentOpts.Background[2],
+		CurrentOpts.Background[3],
 	)
 }
 

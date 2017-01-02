@@ -9,11 +9,19 @@ import (
 	"prime/gfx/gl"
 )
 
+const (
+	BROWSER_SCALE_NONE int = iota+1
+	BROWSER_SCALE_FIT
+	BROWSER_SCALE_FILL
+	BROWSER_SCALE_ASPECT_FILL
+)
+
 var (
 	gfxContext *gl.Context
 
 	gfxWidth  int
 	gfxHeight int
+	gfxScale 	int
 	gfxTitle  string
 
 	OnStart = func() { log.Println("GFX Event: Start") }
@@ -21,10 +29,11 @@ var (
 	OnDraw  = func() { log.Println("GFX Event: Draw") }
 )
 
-func Init(width, height int, title string) error {
+func Init(width, height int, title string, scale int) error {
 	gfxWidth = width
 	gfxHeight = height
 	gfxTitle = title
+	gfxScale = scale
 	return initialize()
 }
 
