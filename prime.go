@@ -10,72 +10,69 @@ import (
 	"prime/gfx/gl/glutil"
 )
 
-type Prime struct {
-	ctx     *gl.Context
-	options *PrimeOptions
-}
+var GL *gl.Context
+var currentOptions *PrimeOptions
 
-func runPrime(opts *PrimeOptions) (*Prime, error) {
-	engine := &Prime{}
-	gfx.OnStart = engine.onGfxStart
-	gfx.OnDraw = engine.onGfxDraw
-	gfx.OnEnd = engine.onGfxEnd
+func runEngine(opts *PrimeOptions) error {
+	currentOptions = opts
 
-	engine.options = opts
+	gfx.OnStart = onGfxStart
+	gfx.OnDraw = onGfxDraw
+	gfx.OnEnd = onGfxEnd
 
 	if err := gfx.Init(opts.Width, opts.Height, opts.Title); err != nil {
-		return nil, err
+		return err
 	}
 
-	return engine, nil
+	return nil
 }
 
 var program *gl.Program
 var buff *gl.Buffer
 
-func (p *Prime) onGfxStart() {
+func onGfxStart() {
 	ctx, err := gfx.GetContext()
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	p.ctx = ctx
+	GL = ctx
 	log.Println("GFX Event: Start")
 
 	//todo remove
-	program, err = glutil.CreateProgram(ctx, vertexShader, fragmentShader)
+	program, err = glutil.CreateProgram(GL, vertexShader, fragmentShader)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	buff = ctx.CreateBuffer()
-	ctx.BindBuffer(ctx.ARRAY_BUFFER, buff)
-	ctx.BufferData(ctx.ARRAY_BUFFER, triangleData, ctx.STATIC_DRAW)
+	buff = GL.CreateBuffer()
+	GL.BindBuffer(GL.ARRAY_BUFFER, buff)
+	GL.BufferData(GL.ARRAY_BUFFER, triangleData, GL.STATIC_DRAW)
 
-	ctx.ClearColor(
-		p.options.Background[0],
-		p.options.Background[1],
-		p.options.Background[2],
-		p.options.Background[3],
+	GL.ClearColor(
+		currentOptions.Background[0],
+		currentOptions.Background[1],
+		currentOptions.Background[2],
+		currentOptions.Background[3],
 	)
 }
 
-func (p *Prime) onGfxDraw() {
+func onGfxDraw() {
 	log.Println("GFX Event: Draw")
 
 	//todo remove
-	p.ctx.Clear(p.ctx.COLOR_BUFFER_BIT | p.ctx.DEPTH_BUFFER_BIT)
-	p.ctx.UseProgram(program)
+	GL.Clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT)
+	GL.UseProgram(program)
 
-	p.ctx.BindBuffer(p.ctx.ARRAY_BUFFER, buff)
-	p.ctx.EnableVertexAttribArray(0)
-	p.ctx.VertexAttribPointer(0, 3, p.ctx.FLOAT, false, 0, 0)
-	p.ctx.DrawArrays(p.ctx.TRIANGLES, 0, 3)
-	p.ctx.DisableVertexAttribArray(0)
+	GL.BindBuffer(GL.ARRAY_BUFFER, buff)
+	GL.EnableVertexAttribArray(0)
+	GL.VertexAttribPointer(0, 3, GL.FLOAT, false, 0, 0)
+	GL.DrawArrays(GL.TRIANGLES, 0, 3)
+	GL.DisableVertexAttribArray(0)
 }
 
-func (p *Prime) onGfxEnd() {
+func onGfxEnd() {
 	log.Println("GFX Event: End")
 
 }

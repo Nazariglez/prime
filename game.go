@@ -2,6 +2,12 @@
 
 package prime
 
+import "log"
+
 type Game struct {
   A, B int
+}
+
+func (g *Game) Init(){
+  log.Println("Game init")
 }
