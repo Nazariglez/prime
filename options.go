@@ -1,6 +1,4 @@
-/**
- * Created by nazarigonzalez on 29/12/16.
- */
+// Created by nazarigonzalez on 29/12/16.
 
 package prime
 
