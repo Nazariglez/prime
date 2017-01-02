@@ -13,6 +13,7 @@ import (
 	"honnef.co/go/js/dom"
 
 	"prime/gfx/gl"
+	"strconv"
 )
 
 type Texture struct{ *js.Object }
@@ -47,6 +48,23 @@ func initialize() error {
 		canvas.Width = gfxWidth
 		canvas.Height = gfxHeight
 
+		win := dom.GetWindow()
+		wf32 := float32(gfxWidth)
+		hf32 := float32(gfxHeight)
+		ww := float32(win.InnerWidth())/wf32
+		hh := float32(win.InnerHeight())/hf32
+
+		var scale float32
+		if ww < hh {
+			scale = ww
+		} else {
+			scale = hh
+		}
+
+		//todo added more scale modes, NONE, FIT, FILL, ASPECT_FIT
+		canvas.Style().SetProperty("width", strconv.Itoa(int(wf32*scale)) + "px", "")
+		canvas.Style().SetProperty("height", strconv.Itoa(int(hf32*scale)) + "px", "")
+
 		if err := run(canvas); err != nil {
 			log.Println(err)
 		}
@@ -77,7 +95,7 @@ func run(canvas *dom.HTMLCanvasElement) error {
 	go func() {
 		for {
 			OnDraw()
-			time.Sleep(33 * time.Millisecond)
+			time.Sleep(16 * time.Millisecond)
 		}
 
 		OnEnd()
