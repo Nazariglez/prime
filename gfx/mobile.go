@@ -5,70 +5,69 @@
 package gfx
 
 import (
-  "log"
-  "runtime"
+	"log"
+	"runtime"
 
-  "golang.org/x/mobile/app"
-  "golang.org/x/mobile/event/lifecycle"
-  "golang.org/x/mobile/event/paint"
-  "golang.org/x/mobile/event/size"
-  "golang.org/x/mobile/event/touch"
+	"golang.org/x/mobile/app"
+	"golang.org/x/mobile/event/lifecycle"
+	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/size"
+	"golang.org/x/mobile/event/touch"
 
-  "prime/gfx/gl"
+	"prime/gfx/gl"
 )
 
 func initialize() error {
-  log.Println("Mobile initialized")
+	log.Println("Mobile initialized")
 
-  run()
-  return nil
+	run()
+	return nil
 }
 
 func run() {
-  app.Main(func(a app.App){
-    runtime.LockOSThread()
+	app.Main(func(a app.App) {
+		runtime.LockOSThread()
 
-    for e := range a.Events() {
+		for e := range a.Events() {
 
-      switch e := a.Filter(e).(type) {
+			switch e := a.Filter(e).(type) {
 
-      case lifecycle.Event:
+			case lifecycle.Event:
 
-        switch e.Crosses(lifecycle.StageVisible) {
+				switch e.Crosses(lifecycle.StageVisible) {
 
-        case lifecycle.CrossOn:
-          c, err := gl.NewContext(e.DrawContext)
-          if err != nil {
-            log.Fatal(err)
-            break
-          }
+				case lifecycle.CrossOn:
+					c, err := gl.NewContext(e.DrawContext)
+					if err != nil {
+						log.Fatal(err)
+						break
+					}
 
-          gfxContext = c
-          OnStart()
+					gfxContext = c
+					OnStart()
 
-          a.Send(paint.Event{})
+					a.Send(paint.Event{})
 
-        case lifecycle.CrossOff:
-          OnEnd()
+				case lifecycle.CrossOff:
+					OnEnd()
 
-        }
+				}
 
-      case size.Event:
+			case size.Event:
 
-      case paint.Event:
-        if gfxContext == nil || e.External {
-          continue
-        }
+			case paint.Event:
+				if gfxContext == nil || e.External {
+					continue
+				}
 
-        OnDraw()
-        a.Publish()
-        a.Send(paint.Event{})
-      case touch.Event:
+				OnDraw()
+				a.Publish()
+				a.Send(paint.Event{})
+			case touch.Event:
 
-      }
+			}
 
-    }
+		}
 
-
-  })
+	})
 }

@@ -3,35 +3,35 @@
 package gfx
 
 import (
-  "errors"
-  "log"
+	"errors"
+	"log"
 
-  "prime/gfx/gl"
+	"prime/gfx/gl"
 )
 
 var (
-  gfxContext *gl.Context
+	gfxContext *gl.Context
 
-  gfxWidth int
-  gfxHeight int
-  gfxTitle string
+	gfxWidth  int
+	gfxHeight int
+	gfxTitle  string
 
-  OnStart = func(){ log.Println("GFX Event: Start") }
-  OnEnd = func(){ log.Println("GFX Event: End") }
-  OnDraw = func(){ log.Println("GFX Event: Draw") }
+	OnStart = func() { log.Println("GFX Event: Start") }
+	OnEnd   = func() { log.Println("GFX Event: End") }
+	OnDraw  = func() { log.Println("GFX Event: Draw") }
 )
 
-func Init(width, height int, title string, bg []float32) error {
-  gfxWidth = width
-  gfxHeight = height
-  gfxTitle = title
-  return initialize()
+func Init(width, height int, title string) error {
+	gfxWidth = width
+	gfxHeight = height
+	gfxTitle = title
+	return initialize()
 }
 
 func GetContext() (*gl.Context, error) {
-  if gfxContext != nil {
-    return gfxContext, nil
-  }
+	if gfxContext != nil {
+		return gfxContext, nil
+	}
 
-  return nil, errors.New("Gfx needs start before get the context.")
+	return nil, errors.New("Gfx needs start before get the context.")
 }
