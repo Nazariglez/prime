@@ -7,7 +7,6 @@ package gfx
 import (
 	"log"
 	"runtime"
-	"time"
 	"strconv"
 
 	"github.com/gopherjs/gopherjs/js"
@@ -33,7 +32,9 @@ func initialize() error {
 	doc := dom.GetWindow().Document().(dom.HTMLDocument)
 	doc.SetTitle(gfxTitle)
 
+	w := make(chan error)
 	onReady(func() {
+		defer close(w)
 		log.Println("Document Loaded!!")
 
 		var canvas *dom.HTMLCanvasElement
@@ -51,11 +52,14 @@ func initialize() error {
 		scaleCanvas(canvas, gfxScale)
 
 		if err := run(canvas); err != nil {
-			log.Println(err)
+			w <- err
+			return
 		}
+
+		w <- nil
 	})
 
-	return nil
+	return <- w
 }
 
 func run(canvas *dom.HTMLCanvasElement) error {
@@ -70,6 +74,7 @@ func run(canvas *dom.HTMLCanvasElement) error {
 	if err != nil {
 		return err
 	}
+
 	GLContext = ctx
 
 	OnStart()
@@ -79,8 +84,10 @@ func run(canvas *dom.HTMLCanvasElement) error {
 
 	go func() {
 		for {
-			OnDraw()
-			time.Sleep(16 * time.Millisecond)
+			select {
+			case fn := <-lockChannel:
+				fn()
+			}
 		}
 
 		OnEnd()
@@ -89,9 +96,7 @@ func run(canvas *dom.HTMLCanvasElement) error {
 	return nil
 }
 
-func postRender(){
-
-}
+func postRender(){}
 
 func scaleCanvas(canvas *dom.HTMLCanvasElement, typ int) {
 	var scale float32
