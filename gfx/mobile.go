@@ -10,68 +10,94 @@ import (
 
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/event/lifecycle"
-	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/event/touch"
 
 	"prime/gfx/gl"
 )
 
+var mobileApp app.App
+var mobileStop bool
+
 func initialize() error {
 	log.Println("Mobile initialized")
-
-	run()
-	return nil
+	return run()
 }
 
-func run() {
+func run() error {
+	ch := make(chan error)
+
 	app.Main(func(a app.App) {
 		runtime.LockOSThread()
+		mobileApp = a
 
-		for e := range a.Events() {
+		w := make(chan error)
 
-			switch e := a.Filter(e).(type) {
+		go func(){
+			for e := range a.Events() {
 
-			case lifecycle.Event:
+				switch e := a.Filter(e).(type) {
 
-				switch e.Crosses(lifecycle.StageVisible) {
+				case lifecycle.Event:
 
-				case lifecycle.CrossOn:
-					c, err := gl.NewContext(e.DrawContext)
-					if err != nil {
-						log.Fatal(err)
-						break
+					switch e.Crosses(lifecycle.StageVisible) {
+
+					case lifecycle.CrossOn:
+						c, err := gl.NewContext(e.DrawContext)
+						if err != nil {
+							w <- err
+							break
+						}
+
+						GLContext = c
+						OnStart()
+
+						w <- nil
+
+					case lifecycle.CrossOff:
+						OnEnd()
+
 					}
 
-					GLContext = c
-					OnStart()
+				case size.Event:
 
-					a.Send(paint.Event{})
+				/*case paint.Event:
+					if GLContext == nil || e.External {
+						continue
+					}
 
-				case lifecycle.CrossOff:
-					OnEnd()
+						select {
+						case fn := <-lockChannel:
+							fn()
+						}
+
+					a.Publish()
+					a.Send(paint.Event{})*/
+				case touch.Event:
 
 				}
-
-			case size.Event:
-
-			case paint.Event:
-				if GLContext == nil || e.External {
-					continue
-				}
-
-				OnDraw()
-				a.Publish()
-				a.Send(paint.Event{})
-			case touch.Event:
 
 			}
+		}()
 
+		if err := <- w; err != nil {
+			ch <- err
+			return
+		}
+		close(w)
+
+		for !mobileStop {
+			select {
+			case fn := <-lockChannel:
+				fn()
+			}
 		}
 
 	})
+
+	return <-ch
 }
 
 func postRender() {
-
+	mobileApp.Publish()
 }
