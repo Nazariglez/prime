@@ -13,6 +13,8 @@ import (
 	"prime/gfx/gl"
 )
 
+var win *glfw.Window
+
 func initialize() error {
 	runtime.LockOSThread()
 	log.Println("Desktop initialized")
@@ -32,24 +34,32 @@ func initialize() error {
 		return err
 	}
 
+	win = window
+
 	window.MakeContextCurrent()
 
 	ctx, err := gl.NewContext()
 	if err != nil {
 		return err
 	}
-	gfxContext = ctx
 
-	OnStart() //todo: pass the ctx as argument?
+	GLContext = ctx
+
+	OnStart()
 
 	for !window.ShouldClose() {
-		//draw here
-		OnDraw()
-
-		window.SwapBuffers()
-		glfw.PollEvents()
+		select {
+		case fn := <-lockChannel:
+			fn()
+		}
 	}
+
 
 	OnEnd()
 	return nil
+}
+
+func postRender() {
+	win.SwapBuffers()
+	glfw.PollEvents()
 }

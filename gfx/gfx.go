@@ -16,8 +16,10 @@ const (
 	BROWSER_SCALE_ASPECT_FILL
 )
 
+var lockChannel chan func()
+
 var (
-	gfxContext *gl.Context
+	GLContext *gl.Context
 
 	gfxWidth  int
 	gfxHeight int
@@ -26,7 +28,6 @@ var (
 
 	OnStart = func() { log.Println("GFX Event: Start") }
 	OnEnd   = func() { log.Println("GFX Event: End") }
-	OnDraw  = func() { log.Println("GFX Event: Draw") }
 )
 
 func Init(width, height int, title string, scale int) error {
@@ -34,13 +35,43 @@ func Init(width, height int, title string, scale int) error {
 	gfxHeight = height
 	gfxTitle = title
 	gfxScale = scale
+
+	lockChannel = make(chan func())
+
 	return initialize()
 }
 
-func GetContext() (*gl.Context, error) {
-	if gfxContext != nil {
-		return gfxContext, nil
+func Render(f func() error) { //todo pass scene graph
+	err := RunSafeFn(func() error {
+		if err := f(); err != nil {
+			return err
+		}
+
+		postRender()
+		return nil
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func RunSafeFn(f func() error) error {
+	if lockChannel == nil {
+		return errors.New("Invalid Safe function. (Channel closed)")
 	}
 
-	return nil, errors.New("Gfx needs start before get the context.")
+	//reminder: sync.Wait has some problem with runtime.LockOSThread
+	w := make(chan bool) //todo sync.Pool this
+	var err error
+
+	lockChannel <- func() {
+		err = f()
+		w <- true
+	}
+
+	<-w
+	close(w)
+
+	return err
 }

@@ -70,7 +70,7 @@ func run(canvas *dom.HTMLCanvasElement) error {
 	if err != nil {
 		return err
 	}
-	gfxContext = ctx
+	GLContext = ctx
 
 	OnStart()
 
@@ -87,6 +87,10 @@ func run(canvas *dom.HTMLCanvasElement) error {
 	}()
 
 	return nil
+}
+
+func postRender(){
+
 }
 
 func scaleCanvas(canvas *dom.HTMLCanvasElement, typ int) {
@@ -168,3 +172,4 @@ func onLoad(cb func()) func() {
 func isReadyStateComplete() bool {
 	return js.Global.Get("document").Get("readyState").String() == "complete"
 }
+

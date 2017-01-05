@@ -43,7 +43,7 @@ func run() {
 						break
 					}
 
-					gfxContext = c
+					GLContext = c
 					OnStart()
 
 					a.Send(paint.Event{})
@@ -56,7 +56,7 @@ func run() {
 			case size.Event:
 
 			case paint.Event:
-				if gfxContext == nil || e.External {
+				if GLContext == nil || e.External {
 					continue
 				}
 
@@ -70,4 +70,8 @@ func run() {
 		}
 
 	})
+}
+
+func postRender() {
+
 }

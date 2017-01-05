@@ -9,22 +9,17 @@ import (
 	"prime/gfx/gl"
 	"prime/gfx/gl/glutil"
 
-	"errors"
-	"sync"
+	"time"
+	"math/rand"
 )
 
-var GL *gl.Context
 var CurrentOpts *PrimeOptions
-var safeFunc chan func()
 
 func runEngine(opts *PrimeOptions) error {
 	CurrentOpts = opts
 
 	gfx.OnStart = onGfxStart
-	gfx.OnDraw = onGfxDraw
 	gfx.OnEnd = onGfxEnd
-
-	safeFunc = make(chan func())
 
 	if err := gfx.Init(opts.Width, opts.Height, opts.Title, opts.BrowserScale); err != nil {
 		return err
@@ -33,70 +28,59 @@ func runEngine(opts *PrimeOptions) error {
 	return nil
 }
 
-func runOnLockThread(f func() error) error {
-	//todo read the safeFunc in lockOsTrehad
-	if safeFunc == nil {
-		return errors.New("Invalid Safe function. (Channel closed)")
-	}
-
-	var wg sync.WaitGroup
-	var err error
-	wg.Add(1)
-
-	safeFunc <- func() {
-		err = f()
-		wg.Done()
-	}
-
-	wg.Wait()
-	return err
-}
-
 var program *gl.Program
 var buff *gl.Buffer
 
 func onGfxStart() {
-	go func() {
-		ctx, err := gfx.GetContext()
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
+	ctx := gfx.GLContext
 
-		GL = ctx
-		log.Println("GFX Event: Start")
+	log.Println("GFX Event: Start")
 
-		//todo remove
-		program, err = glutil.CreateProgram(GL, vertexShader, fragmentShader)
+	var err error
+	go gfx.RunSafeFn(func() error {
+		program, err = glutil.CreateProgram(ctx, vertexShader, fragmentShader)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		buff = GL.CreateBuffer()
-		GL.BindBuffer(GL.ARRAY_BUFFER, buff)
-		GL.BufferData(GL.ARRAY_BUFFER, triangleData, GL.STATIC_DRAW)
+		buff = ctx.CreateBuffer()
+		ctx.BindBuffer(ctx.ARRAY_BUFFER, buff)
+		ctx.BufferData(ctx.ARRAY_BUFFER, triangleData, ctx.STATIC_DRAW)
 
-		GL.ClearColor(
+		ctx.ClearColor(
 			CurrentOpts.Background[0],
 			CurrentOpts.Background[1],
 			CurrentOpts.Background[2],
 			CurrentOpts.Background[3],
 		)
+		log.Println("OpenOpen")
+		return nil
+	})
+
+	go func(){
+		for {
+			go gfx.Render(func() error {
+				ctx.Clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT)
+				ctx.ClearColor(
+					rand.Float32(),
+					rand.Float32(),
+					rand.Float32(),
+					rand.Float32(),
+				)
+
+				ctx.UseProgram(program)
+
+				ctx.BindBuffer(ctx.ARRAY_BUFFER, buff)
+				ctx.EnableVertexAttribArray(0)
+				ctx.VertexAttribPointer(0, 3, ctx.FLOAT, false, 0, 0)
+				ctx.DrawArrays(ctx.TRIANGLES, 0, 3)
+				ctx.DisableVertexAttribArray(0)
+
+				return nil
+			})
+			time.Sleep(16 * time.Millisecond)
+		}
 	}()
-}
-
-func onGfxDraw() {
-	log.Println("GFX Event: Draw")
-
-	//todo remove
-	GL.Clear(GL.COLOR_BUFFER_BIT | GL.DEPTH_BUFFER_BIT)
-	GL.UseProgram(program)
-
-	GL.BindBuffer(GL.ARRAY_BUFFER, buff)
-	GL.EnableVertexAttribArray(0)
-	GL.VertexAttribPointer(0, 3, GL.FLOAT, false, 0, 0)
-	GL.DrawArrays(GL.TRIANGLES, 0, 3)
-	GL.DisableVertexAttribArray(0)
 }
 
 func onGfxEnd() {
