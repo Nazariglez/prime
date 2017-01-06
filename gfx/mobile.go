@@ -17,7 +17,6 @@ import (
 )
 
 var mobileApp app.App
-var mobileStop bool
 
 func initialize() error {
 	log.Println("Mobile initialized")
@@ -31,8 +30,6 @@ func run() error {
 		runtime.LockOSThread()
 		mobileApp = a
 
-		w := make(chan error)
-
 		go func(){
 			for e := range a.Events() {
 
@@ -43,16 +40,11 @@ func run() error {
 					switch e.Crosses(lifecycle.StageVisible) {
 
 					case lifecycle.CrossOn:
-						c, err := gl.NewContext(e.DrawContext)
-						if err != nil {
-							w <- err
-							break
-						}
+						c, _ := gl.NewContext(e.DrawContext)
 
 						GLContext = c
-						OnStart()
 
-						w <- nil
+						go OnStart()
 
 					case lifecycle.CrossOff:
 						OnEnd()
@@ -80,19 +72,7 @@ func run() error {
 			}
 		}()
 
-		if err := <- w; err != nil {
-			ch <- err
-			return
-		}
-		close(w)
-
-		for !mobileStop {
-			select {
-			case fn := <-lockChannel:
-				fn()
-			}
-		}
-
+		RunSafeReader()
 	})
 
 	return <-ch

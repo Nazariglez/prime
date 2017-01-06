@@ -62,7 +62,6 @@ func onGfxStart() {
 	}
 
 	loop.Run(update)
-
 }
 
 func onGfxEnd() {
