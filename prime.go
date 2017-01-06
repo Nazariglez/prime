@@ -61,7 +61,7 @@ func onGfxStart() {
 		log.Fatal(err)
 	}
 
-	go loop.Run(update)
+	loop.Run(update)
 
 }
 
