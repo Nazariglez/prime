@@ -77,21 +77,11 @@ func run(canvas *dom.HTMLCanvasElement) error {
 
 	GLContext = ctx
 
-	OnStart()
+	go RunSafeReader()
+	go OnStart()
 
 	js.Global.Set("ctx", ctx)               //todo remove this
 	ctx.Viewport(0, 0, gfxWidth, gfxHeight) //todo fix this, retina issues (removed from here)
-
-	go func() {
-		for {
-			select {
-			case fn := <-lockChannel:
-				fn()
-			}
-		}
-
-		OnEnd()
-	}()
 
 	return nil
 }
