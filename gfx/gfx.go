@@ -17,6 +17,7 @@ const (
 )
 
 var lockChannel chan func()
+var closeChannel chan error
 
 var (
 	GLContext *gl.Context
@@ -36,9 +37,28 @@ func Init(width, height int, title string, scale int) error {
 	gfxTitle = title
 	gfxScale = scale
 
-	lockChannel = make(chan func())
-
 	return initialize()
+}
+
+func Close(err error) {
+	closeChannel <- err
+}
+
+func RunSafeReader() error {
+	lockChannel = make(chan func())
+	closeChannel = make(chan error, 1)
+
+	for {
+		select {
+		case fn := <-lockChannel:
+			fn()
+		case err := <-closeChannel:
+			OnEnd()
+			return err
+		}
+	}
+
+	return nil
 }
 
 func Render(f func() error) { //todo pass scene graph
@@ -47,13 +67,17 @@ func Render(f func() error) { //todo pass scene graph
 			return err
 		}
 
-		postRender()
 		return nil
 	})
 
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	_ = RunSafeFn(func() error {
+		postRender()
+		return nil
+	})
 }
 
 func RunSafeFn(f func() error) error {
@@ -62,16 +86,11 @@ func RunSafeFn(f func() error) error {
 	}
 
 	//reminder: sync.Wait has some problem with runtime.LockOSThread
-	w := make(chan bool) //todo sync.Pool this
-	var err error
+	w := make(chan error, 1) //todo sync.Pool this
 
 	lockChannel <- func() {
-		err = f()
-		w <- true
+		w <- f()
 	}
 
-	<-w
-	close(w)
-
-	return err
+	return <-w
 }

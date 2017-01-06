@@ -9,8 +9,8 @@ import (
 	"prime/gfx/gl"
 	"prime/gfx/gl/glutil"
 
-	"time"
 	"math/rand"
+	"prime/loop"
 )
 
 var CurrentOpts *PrimeOptions
@@ -36,12 +36,13 @@ func onGfxStart() {
 
 	log.Println("GFX Event: Start")
 
-	var err error
-	go gfx.RunSafeFn(func() error {
-		program, err = glutil.CreateProgram(ctx, vertexShader, fragmentShader)
+	err := gfx.RunSafeFn(func() error {
+		p, err := glutil.CreateProgram(ctx, vertexShader, fragmentShader)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
+
+		program = p
 
 		buff = ctx.CreateBuffer()
 		ctx.BindBuffer(ctx.ARRAY_BUFFER, buff)
@@ -53,39 +54,42 @@ func onGfxStart() {
 			CurrentOpts.Background[2],
 			CurrentOpts.Background[3],
 		)
-		log.Println("OpenOpen")
 		return nil
 	})
 
-	go func(){
-		for {
-			go gfx.Render(func() error {
-				ctx.Clear(ctx.COLOR_BUFFER_BIT | ctx.DEPTH_BUFFER_BIT)
-				ctx.ClearColor(
-					rand.Float32(),
-					rand.Float32(),
-					rand.Float32(),
-					rand.Float32(),
-				)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-				ctx.UseProgram(program)
+	go loop.Run(update)
 
-				ctx.BindBuffer(ctx.ARRAY_BUFFER, buff)
-				ctx.EnableVertexAttribArray(0)
-				ctx.VertexAttribPointer(0, 3, ctx.FLOAT, false, 0, 0)
-				ctx.DrawArrays(ctx.TRIANGLES, 0, 3)
-				ctx.DisableVertexAttribArray(0)
-
-				return nil
-			})
-			time.Sleep(16 * time.Millisecond)
-		}
-	}()
 }
 
 func onGfxEnd() {
 	log.Println("GFX Event: End")
 
+}
+
+func update(d float64) {
+	gfx.Render(func() error {
+		gfx.GLContext.Clear(gfx.GLContext.COLOR_BUFFER_BIT | gfx.GLContext.DEPTH_BUFFER_BIT)
+		gfx.GLContext.ClearColor(
+			rand.Float32(),
+			rand.Float32(),
+			rand.Float32(),
+			rand.Float32(),
+		)
+
+		gfx.GLContext.UseProgram(program)
+
+		gfx.GLContext.BindBuffer(gfx.GLContext.ARRAY_BUFFER, buff)
+		gfx.GLContext.EnableVertexAttribArray(0)
+		gfx.GLContext.VertexAttribPointer(0, 3, gfx.GLContext.FLOAT, false, 0, 0)
+		gfx.GLContext.DrawArrays(gfx.GLContext.TRIANGLES, 0, 3)
+		gfx.GLContext.DisableVertexAttribArray(0)
+
+		return nil
+	})
 }
 
 var fragmentShader = `

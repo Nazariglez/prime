@@ -6,9 +6,10 @@
 package gfx
 
 import (
-	"github.com/go-gl/glfw/v3.2/glfw"
 	"log"
 	"runtime"
+
+	"github.com/go-gl/glfw/v3.2/glfw"
 
 	"prime/gfx/gl"
 )
@@ -45,21 +46,16 @@ func initialize() error {
 
 	GLContext = ctx
 
-	OnStart()
+	go OnStart()
 
-	for !window.ShouldClose() {
-		select {
-		case fn := <-lockChannel:
-			fn()
-		}
-	}
-
-
-	OnEnd()
-	return nil
+	return RunSafeReader()
 }
 
 func postRender() {
+	if win.ShouldClose() {
+		Close(nil)
+	}
+
 	win.SwapBuffers()
 	glfw.PollEvents()
 }
