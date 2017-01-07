@@ -5,22 +5,43 @@
 package loop
 
 import (
-  "time"
   "github.com/gopherjs/gopherjs/js"
-  "log"
 )
 
+//todo setFps? right now raf dont allow fps
+var raf int
+
+func (l *loopContext) start() {
+  if l.isRunning {
+    return
+  }
+
+  l.last = performanceNow()
+  l.isRunning = true
+
+  go l.update()
+}
+
+func (l *loopContext) stop() {
+  if !l.isRunning {
+    return
+  }
+
+  js.Global.Get("window").Call("cancelAnimationFrame", raf)
+  l.isRunning = false
+}
+
 func (l *loopContext) update() {
-  js.Global.Get("window").Call("requestAnimationFrame", l.update)
-  now := time.Now().UnixNano() //todo use perfomance.now() because the delta is not precise with UnixNano on browsers
+  raf = js.Global.Get("window").Call("requestAnimationFrame", l.update).Int()
+  now := performanceNow()
   l.time += now - l.last
   delta := l.time - l.lastTime
 
   l.lastTime = l.time
   l.last = now
-  l.lastDelta = float64(delta)/1e9
+  l.delta = float64(delta)/1e07
 
-  l.fpsTotalTime += l.lastDelta
+  l.fpsTotalTime += l.delta
   l.fpsIndex++
 
   if l.fpsIndex == 5 {
@@ -29,6 +50,9 @@ func (l *loopContext) update() {
     l.fpsTotalTime = 0
   }
 
-  go l.tickFn(l.lastDelta)
-  log.Println("Delta", l.lastDelta)
+  go l.tickFn(l.delta)
+}
+
+func performanceNow() int64 {
+  return int64(js.Global.Get("performance").Call("now").Float() * 1e04)
 }

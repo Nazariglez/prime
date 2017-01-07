@@ -12,15 +12,15 @@ var currentLoop *loopContext
 var mu sync.RWMutex
 
 type loopContext struct {
-  fps, currentFps, lastDelta float64
-  nanoFps time.Duration
-  isRunning bool
-  last, lastTime, time int64
-  ticker *time.Ticker
-  tickFn func (delta float64)
+  fps, currentFps, delta float64
+  nanoFps                time.Duration
+  isRunning              bool
+  last, lastTime, time   int64
+  ticker                 *time.Ticker
+  tickFn                 func (delta float64)
 
-  fpsIndex int
-  fpsTotalTime float64
+  fpsIndex               int
+  fpsTotalTime           float64
 
 }
 
@@ -36,27 +36,6 @@ func Run(update func(delta float64)) error {
   currentLoop.setFPS(60)
   currentLoop.start()
   return nil
-}
-
-func (l *loopContext) start() {
-  if l.isRunning {
-    return
-  }
-
-  l.last = time.Now().UnixNano()
-  l.isRunning = true
-  l.ticker = time.NewTicker(l.nanoFps)
-
-  go l.update()
-}
-
-func (l *loopContext) stop() {
-  if !l.isRunning {
-    return
-  }
-
-  l.ticker.Stop()
-  l.isRunning = false
 }
 
 func (l *loopContext) setFPS(fps float64) {
