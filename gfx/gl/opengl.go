@@ -502,6 +502,14 @@ func (c *Context) ValidateProgram(program *Program) {
 	gl2.ValidateProgram(program.uint32)
 }
 
+func (c *Context) Uniform1i(location *UniformLocation, x int) {
+	gl2.Uniform1i(location.int32, int32(x))
+}
+
+func (c *Context) Uniform1f(location *UniformLocation, x float32) {
+	gl2.Uniform1f(location.int32, x)
+}
+
 func (c *Context) Uniform2f(location *UniformLocation, x, y float32) {
 	gl2.Uniform2f(location.int32, x, y)
 }

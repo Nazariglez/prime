@@ -26,7 +26,7 @@ type loopContext struct {
 func Run(update func(delta float64)) error {
 	defer mu.Unlock()
 	mu.Lock()
-	
+
 	if currentLoop != nil {
 		return errors.New("Can not call loop.Run twice, the game is already running.")
 	}
