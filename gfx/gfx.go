@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	BROWSER_SCALE_NONE int = iota+1
+	BROWSER_SCALE_NONE int = iota + 1
 	BROWSER_SCALE_FIT
 	BROWSER_SCALE_FILL
 	BROWSER_SCALE_ASPECT_FILL
@@ -24,7 +24,7 @@ var (
 
 	gfxWidth  int
 	gfxHeight int
-	gfxScale 	int
+	gfxScale  int
 	gfxTitle  string
 
 	OnStart = func() { log.Println("GFX Event: Start") }

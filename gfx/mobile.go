@@ -30,7 +30,7 @@ func run() error {
 		runtime.LockOSThread()
 		mobileApp = a
 
-		go func(){
+		go func() {
 			for e := range a.Events() {
 
 				switch e := a.Filter(e).(type) {
@@ -54,17 +54,17 @@ func run() error {
 				case size.Event:
 
 				/*case paint.Event:
-					if GLContext == nil || e.External {
-						continue
+				if GLContext == nil || e.External {
+					continue
+				}
+
+					select {
+					case fn := <-lockChannel:
+						fn()
 					}
 
-						select {
-						case fn := <-lockChannel:
-							fn()
-						}
-
-					a.Publish()
-					a.Send(paint.Event{})*/
+				a.Publish()
+				a.Send(paint.Event{})*/
 				case touch.Event:
 
 				}

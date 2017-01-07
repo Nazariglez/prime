@@ -5,55 +5,55 @@
 package loop
 
 import (
-  "time"
+	"time"
 )
 
 func (l *loopContext) start() {
-  if l.isRunning {
-    return
-  }
+	if l.isRunning {
+		return
+	}
 
-  l.last = time.Now().UnixNano()
-  l.isRunning = true
-  l.ticker = time.NewTicker(l.nanoFps)
+	l.last = time.Now().UnixNano()
+	l.isRunning = true
+	l.ticker = time.NewTicker(l.nanoFps)
 
-  go l.update()
+	go l.update()
 }
 
 func (l *loopContext) stop() {
-  if !l.isRunning {
-    return
-  }
+	if !l.isRunning {
+		return
+	}
 
-  l.ticker.Stop()
-  l.isRunning = false
+	l.ticker.Stop()
+	l.isRunning = false
 }
 
 func (l *loopContext) update() {
-  var now, delta int64
-  for _ = range l.ticker.C {
-    now = time.Now().UnixNano()
+	var now, delta int64
+	for _ = range l.ticker.C {
+		now = time.Now().UnixNano()
 
-    mu.Lock()
+		mu.Lock()
 
-    l.time += now - l.last
-    delta = l.time - l.lastTime
+		l.time += now - l.last
+		delta = l.time - l.lastTime
 
-    l.lastTime = l.time
-    l.last = now
-    l.delta = float64(delta)/1e9
+		l.lastTime = l.time
+		l.last = now
+		l.delta = float64(delta) / 1e9
 
-    l.fpsTotalTime += l.delta
-    l.fpsIndex++
+		l.fpsTotalTime += l.delta
+		l.fpsIndex++
 
-    if l.fpsIndex == 5 {
-      l.currentFps = 1/(l.fpsTotalTime/5)
-      l.fpsIndex = 0
-      l.fpsTotalTime = 0
-    }
+		if l.fpsIndex == 5 {
+			l.currentFps = 1 / (l.fpsTotalTime / 5)
+			l.fpsIndex = 0
+			l.fpsTotalTime = 0
+		}
 
-    mu.Unlock()
+		mu.Unlock()
 
-    l.tickFn(l.delta)
-  }
+		l.tickFn(l.delta)
+	}
 }

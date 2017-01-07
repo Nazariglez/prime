@@ -5,9 +5,9 @@ package prime
 import "log"
 
 type Game struct {
-  A, B int
+	A, B int
 }
 
-func (g *Game) Init(){
-  log.Println("Game init")
+func (g *Game) Init() {
+	log.Println("Game init")
 }
