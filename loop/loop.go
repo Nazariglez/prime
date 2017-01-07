@@ -24,6 +24,9 @@ type loopContext struct {
 }
 
 func Run(update func(delta float64)) error {
+	defer mu.Unlock()
+	mu.Lock()
+	
 	if currentLoop != nil {
 		return errors.New("Can not call loop.Run twice, the game is already running.")
 	}
@@ -99,4 +102,15 @@ func GetRealFPS() float64 {
 	}
 
 	return 0
+}
+
+func IsRunning() bool {
+	defer mu.RUnlock()
+	mu.RLock()
+
+	if currentLoop != nil {
+		return currentLoop.isRunning
+	}
+
+	return false
 }
