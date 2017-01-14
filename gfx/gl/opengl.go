@@ -326,6 +326,10 @@ func (c *Context) CreateShader(typ int) *Shader {
 	return shader
 }
 
+func (c *Context) ActiveTexture(texture int) {
+	gl2.ActiveTexture(uint32(texture))
+}
+
 func (c *Context) ShaderSource(shader *Shader, source string) {
 	glsource, free := gl2.Strs(source + "\x00")
 	gl2.ShaderSource(shader.uint32, 1, glsource, nil)
