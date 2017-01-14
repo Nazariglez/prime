@@ -15,14 +15,6 @@ import (
 	"prime/gfx/gl"
 )
 
-type Texture struct{ *js.Object }
-type Buffer struct{ *js.Object }
-type FrameBuffer struct{ *js.Object }
-type RenderBuffer struct{ *js.Object }
-type Program struct{ *js.Object }
-type UniformLocation struct{ *js.Object }
-type Shader struct{ *js.Object }
-
 var htmlContentLoaded bool
 
 func initialize() error {
