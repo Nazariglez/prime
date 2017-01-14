@@ -9,7 +9,8 @@ import (
 )
 
 type Texture struct {
-  gl.Texture
+  Width, Height int
+  Tex *gl.Texture
 }
 
 //https://github.com/cstegel/opengl-samples-golang/blob/master/basic-textures/gfx/texture.go
