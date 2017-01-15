@@ -63,7 +63,7 @@ func onGfxEnd() {
 
 func update(d float64) {
 	gfx.Render(func() error {
-		gfx.GLContext.Clear(gfx.GLContext.COLOR_BUFFER_BIT | gfx.GLContext.DEPTH_BUFFER_BIT)
+		gfx.GL.Clear(gfx.GL.COLOR_BUFFER_BIT | gfx.GL.DEPTH_BUFFER_BIT)
 		DrawTex(tex)
 		return nil
 	})
@@ -142,18 +142,18 @@ var triangleData = []float32{
 }
 
 func drawTriangleInit() error {
-	p, err := glutil.CreateProgram(gfx.GLContext, triangleVertexShader, triangleFragmentShader)
+	p, err := glutil.CreateProgram(gfx.GL, triangleVertexShader, triangleFragmentShader)
 	if err != nil {
 		return err
 	}
 
 	triangleProgram = p
 
-	triangleBuffer = gfx.GLContext.CreateBuffer()
-	gfx.GLContext.BindBuffer(gfx.GLContext.ARRAY_BUFFER, triangleBuffer)
-	gfx.GLContext.BufferData(gfx.GLContext.ARRAY_BUFFER, triangleData, gfx.GLContext.STATIC_DRAW)
+	triangleBuffer = gfx.GL.CreateBuffer()
+	gfx.GL.BindBuffer(gfx.GL.ARRAY_BUFFER, triangleBuffer)
+	gfx.GL.BufferData(gfx.GL.ARRAY_BUFFER, triangleData, gfx.GL.STATIC_DRAW)
 
-	gfx.GLContext.ClearColor(
+	gfx.GL.ClearColor(
 		CurrentOpts.Background[0],
 		CurrentOpts.Background[1],
 		CurrentOpts.Background[2],
@@ -163,7 +163,7 @@ func drawTriangleInit() error {
 }
 
 func drawTriangleRender() error {
-	gfx.GLContext.Clear(gfx.GLContext.COLOR_BUFFER_BIT | gfx.GLContext.DEPTH_BUFFER_BIT)
+	gfx.GL.Clear(gfx.GL.COLOR_BUFFER_BIT | gfx.GL.DEPTH_BUFFER_BIT)
 	/*gfx.GLContext.ClearColor(
 		rand.Float32(),
 		rand.Float32(),
@@ -171,20 +171,20 @@ func drawTriangleRender() error {
 		rand.Float32(),
 	)*/
 
-	gfx.GLContext.UseProgram(triangleProgram)
+	gfx.GL.UseProgram(triangleProgram)
 
-	gfx.GLContext.BindBuffer(gfx.GLContext.ARRAY_BUFFER, triangleBuffer)
-	gfx.GLContext.EnableVertexAttribArray(0)
-	gfx.GLContext.VertexAttribPointer(0, 3, gfx.GLContext.FLOAT, false, 0, 0)
-	gfx.GLContext.DrawArrays(gfx.GLContext.TRIANGLES, 0, len(triangleData)/3)
-	gfx.GLContext.DisableVertexAttribArray(0)
+	gfx.GL.BindBuffer(gfx.GL.ARRAY_BUFFER, triangleBuffer)
+	gfx.GL.EnableVertexAttribArray(0)
+	gfx.GL.VertexAttribPointer(0, 3, gfx.GL.FLOAT, false, 0, 0)
+	gfx.GL.DrawArrays(gfx.GL.TRIANGLES, 0, len(triangleData)/3)
+	gfx.GL.DisableVertexAttribArray(0)
 
 	return nil
 }
 
 func GenerateTexture(file string) (*gfx.Texture, error) {
-	t := gfx.GLContext.CreateTexture()
-	gfx.GLContext.BindTexture(gfx.GLContext.TEXTURE_2D, t)
+	t := gfx.GL.CreateTexture()
+	gfx.GL.BindTexture(gfx.GL.TEXTURE_2D, t)
 	/*gfx.GLContext.TexImage2D(
 		gfx.GLContext.TEXTURE_2D,
 		0,
@@ -195,10 +195,10 @@ func GenerateTexture(file string) (*gfx.Texture, error) {
 
 	)*/
 
-	gfx.GLContext.TexParameteri(gfx.GLContext.TEXTURE_2D, gfx.GLContext.TEXTURE_WRAP_S, gfx.GLContext.CLAMP_TO_EDGE)
-	gfx.GLContext.TexParameteri(gfx.GLContext.TEXTURE_2D, gfx.GLContext.TEXTURE_WRAP_T, gfx.GLContext.CLAMP_TO_EDGE)
-	gfx.GLContext.TexParameteri(gfx.GLContext.TEXTURE_2D, gfx.GLContext.TEXTURE_MIN_FILTER, gfx.GLContext.LINEAR)
-	gfx.GLContext.TexParameteri(gfx.GLContext.TEXTURE_2D, gfx.GLContext.TEXTURE_MAG_FILTER, gfx.GLContext.LINEAR)
+	gfx.GL.TexParameteri(gfx.GL.TEXTURE_2D, gfx.GL.TEXTURE_WRAP_S, gfx.GL.CLAMP_TO_EDGE)
+	gfx.GL.TexParameteri(gfx.GL.TEXTURE_2D, gfx.GL.TEXTURE_WRAP_T, gfx.GL.CLAMP_TO_EDGE)
+	gfx.GL.TexParameteri(gfx.GL.TEXTURE_2D, gfx.GL.TEXTURE_MIN_FILTER, gfx.GL.LINEAR)
+	gfx.GL.TexParameteri(gfx.GL.TEXTURE_2D, gfx.GL.TEXTURE_MAG_FILTER, gfx.GL.LINEAR)
 
 	img, err := loadImage(file)
 	if err != nil {
@@ -207,8 +207,8 @@ func GenerateTexture(file string) (*gfx.Texture, error) {
 
 	rect := img.Bounds()
 	tex := &gfx.Texture{rect.Dx(), rect.Dy(), t}
-	gfx.GLContext.BindTexture(gfx.GLContext.TEXTURE_2D, tex.Tex)
-	gfx.GLContext.TexImage2D(gfx.GLContext.TEXTURE_2D, 0, gfx.GLContext.RGBA, gfx.GLContext.RGBA, gfx.GLContext.UNSIGNED_BYTE, img)
+	gfx.GL.BindTexture(gfx.GL.TEXTURE_2D, tex.Tex)
+	gfx.GL.TexImage2D(gfx.GL.TEXTURE_2D, 0, gfx.GL.RGBA, gfx.GL.RGBA, gfx.GL.UNSIGNED_BYTE, img)
 
 	return tex, nil
 }
@@ -237,42 +237,45 @@ var texcoords = []float32{
 
 func InitTex() error {
 	var err error
-	texProg, err = glutil.CreateProgram(gfx.GLContext, vst, fst)
+	texProg, err = glutil.CreateProgram(gfx.GL, vst, fst)
 	if err != nil {
 		return err
 	}
 
-	positionLocation = gfx.GLContext.GetAttribLocation(texProg, "a_position")
-	texcoordLocation = gfx.GLContext.GetAttribLocation(texProg, "a_texcoord")
-	textureLocation = gfx.GLContext.GetUniformLocation(texProg, "u_texture")
+	positionLocation = gfx.GL.GetAttribLocation(texProg, "a_position")
+	texcoordLocation = gfx.GL.GetAttribLocation(texProg, "a_texcoord")
+	textureLocation = gfx.GL.GetUniformLocation(texProg, "u_texture")
 
-	positionBuffer = gfx.GLContext.CreateBuffer()
-	gfx.GLContext.BindBuffer(gfx.GLContext.ARRAY_BUFFER, positionBuffer)
-	gfx.GLContext.BufferData(gfx.GLContext.ARRAY_BUFFER, positions, gfx.GLContext.STATIC_DRAW)
+	positionBuffer = gfx.GL.CreateBuffer()
+	gfx.GL.BindBuffer(gfx.GL.ARRAY_BUFFER, positionBuffer)
+	gfx.GL.BufferData(gfx.GL.ARRAY_BUFFER, positions, gfx.GL.STATIC_DRAW)
 
-	texcoordBuffer = gfx.GLContext.CreateBuffer()
-	gfx.GLContext.BindBuffer(gfx.GLContext.ARRAY_BUFFER, texcoordBuffer)
-	gfx.GLContext.BufferData(gfx.GLContext.ARRAY_BUFFER, texcoords, gfx.GLContext.STATIC_DRAW)
+	texcoordBuffer = gfx.GL.CreateBuffer()
+	gfx.GL.BindBuffer(gfx.GL.ARRAY_BUFFER, texcoordBuffer)
+	gfx.GL.BufferData(gfx.GL.ARRAY_BUFFER, texcoords, gfx.GL.STATIC_DRAW)
 
 
 	return nil
 }
 
 func DrawTex(tex *gfx.Texture) {
-	gfx.GLContext.BindTexture(gfx.GLContext.TEXTURE_2D, tex.Tex)
-	gfx.GLContext.UseProgram(texProg)
+	gfx.GL.BindTexture(gfx.GL.TEXTURE_2D, tex.Tex)
+	gfx.GL.UseProgram(texProg)
 
-	gfx.GLContext.BindBuffer(gfx.GLContext.ARRAY_BUFFER, positionBuffer)
-	gfx.GLContext.EnableVertexAttribArray(positionLocation)
-	gfx.GLContext.VertexAttribPointer(positionLocation, 2, gfx.GLContext.FLOAT, false, 0, 0)
-	gfx.GLContext.BindBuffer(gfx.GLContext.ARRAY_BUFFER, colorBuffer)
-	gfx.GLContext.EnableVertexAttribArray(texcoordLocation)
-	gfx.GLContext.VertexAttribPointer(texcoordLocation, 2, gfx.GLContext.FLOAT, false, 0, 0)
+	gfx.GL.BindBuffer(gfx.GL.ARRAY_BUFFER, positionBuffer)
+	gfx.GL.EnableVertexAttribArray(positionLocation)
+	gfx.GL.VertexAttribPointer(positionLocation, 2, gfx.GL.FLOAT, false, 0, 0)
+	gfx.GL.BindBuffer(gfx.GL.ARRAY_BUFFER, colorBuffer)
+	gfx.GL.EnableVertexAttribArray(texcoordLocation)
+	gfx.GL.VertexAttribPointer(texcoordLocation, 2, gfx.GL.FLOAT, false, 0, 0)
 
 	//camera?
 
-	gfx.GLContext.Uniform1i(textureLocation, 0)
-	gfx.GLContext.DrawArrays(gfx.GLContext.TRIANGLES, 0, 6)
+	gfx.GL.Uniform1i(textureLocation, 0)
+	gfx.GL.DrawArrays(gfx.GL.TRIANGLES, 0, 4)
+
+	//todo http://webglfundamentals.org/webgl/lessons/webgl-2d-drawimage.html
+	//todo 2D image view-source:http://webglfundamentals.org/webgl/webgl-2d-image.html
 }
 
 

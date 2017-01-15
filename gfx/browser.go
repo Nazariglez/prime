@@ -67,7 +67,7 @@ func run(canvas *dom.HTMLCanvasElement) error {
 		return err
 	}
 
-	GLContext = ctx
+	GL = ctx
 
 	go RunSafeReader()
 	go OnStart()

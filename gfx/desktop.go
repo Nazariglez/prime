@@ -44,7 +44,7 @@ func initialize() error {
 		return err
 	}
 
-	GLContext = ctx
+	GL = ctx
 
 	go OnStart()
 

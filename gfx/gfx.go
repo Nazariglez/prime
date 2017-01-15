@@ -20,7 +20,7 @@ var lockChannel chan func()
 var closeChannel chan error
 
 var (
-	GLContext *gl.Context
+	GL *gl.Context
 
 	gfxWidth  int
 	gfxHeight int

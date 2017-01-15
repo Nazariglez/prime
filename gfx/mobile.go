@@ -42,7 +42,7 @@ func run() error {
 					case lifecycle.CrossOn:
 						c, _ := gl.NewContext(e.DrawContext)
 
-						GLContext = c
+						GL = c
 
 						go OnStart()
 
