@@ -4,21 +4,26 @@ package gfx
 
 import (
   "prime/gfx/gl"
-  "image"
-  "image/draw"
 )
 
 type Texture struct {
-  Width, Height int
   Tex *gl.Texture
+  Width float32
+  Height float32
 }
 
-//https://github.com/cstegel/opengl-samples-golang/blob/master/basic-textures/gfx/texture.go
+func NewTexture(img *Image) *Texture {
+  tex := GL.CreateTexture()
+  GL.BindTexture(GL.TEXTURE_2D, tex)
 
-func NewTexture(img image.Image) {
-  rect := img.Bounds()
-  rgba := image.NewNRGBA(rect)
-  draw.Draw(rgba, rect, img, image.Pt(0,0), draw.Src)
-  //todo: stride?
+  GL.TexParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.CLAMP_TO_EDGE)
+  GL.TexParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.CLAMP_TO_EDGE)
+  GL.TexParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR)
+  GL.TexParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.NEAREST)
 
+  //todo: manage nil img.Data?
+
+  GL.TexImage2D(GL.TEXTURE_2D, 0, GL.RGBA, GL.RGBA, GL.UNSIGNED_BYTE, img.Data)
+
+  return &Texture{tex, float32(img.Width), float32(img.Height)}
 }

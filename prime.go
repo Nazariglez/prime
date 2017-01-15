@@ -183,34 +183,12 @@ func drawTriangleRender() error {
 }
 
 func GenerateTexture(file string) (*gfx.Texture, error) {
-	t := gfx.GL.CreateTexture()
-	gfx.GL.BindTexture(gfx.GL.TEXTURE_2D, t)
-	/*gfx.GLContext.TexImage2D(
-		gfx.GLContext.TEXTURE_2D,
-		0,
-		gfx.GLContext.RGBA,
-		1, 1, 0,
-		gfx.GLContext.RGBA,
-		gfx.GLContext.UNSIGNED_BYTE,
-
-	)*/
-
-	gfx.GL.TexParameteri(gfx.GL.TEXTURE_2D, gfx.GL.TEXTURE_WRAP_S, gfx.GL.CLAMP_TO_EDGE)
-	gfx.GL.TexParameteri(gfx.GL.TEXTURE_2D, gfx.GL.TEXTURE_WRAP_T, gfx.GL.CLAMP_TO_EDGE)
-	gfx.GL.TexParameteri(gfx.GL.TEXTURE_2D, gfx.GL.TEXTURE_MIN_FILTER, gfx.GL.LINEAR)
-	gfx.GL.TexParameteri(gfx.GL.TEXTURE_2D, gfx.GL.TEXTURE_MAG_FILTER, gfx.GL.LINEAR)
-
 	img, err := loadImage(file)
 	if err != nil {
 		return nil, err
 	}
 
-	rect := img.Bounds()
-	tex := &gfx.Texture{rect.Dx(), rect.Dy(), t}
-	gfx.GL.BindTexture(gfx.GL.TEXTURE_2D, tex.Tex)
-	gfx.GL.TexImage2D(gfx.GL.TEXTURE_2D, 0, gfx.GL.RGBA, gfx.GL.RGBA, gfx.GL.UNSIGNED_BYTE, img)
-
-	return tex, nil
+	return gfx.NewTexture(img), nil
 }
 
 var texProg *gl.Program
@@ -229,10 +207,12 @@ var positions = []float32{
 }
 
 var texcoords = []float32{
-	0, 0, 0,
-	1, 1, 0,
-	1, 0, 0,
-	1, 1, 1,
+	0, 0,
+	1, 0,
+	0, 1,
+	0, 1,
+	1, 0,
+	1, 1,
 }
 
 func InitTex() error {
@@ -254,11 +234,12 @@ func InitTex() error {
 	gfx.GL.BindBuffer(gfx.GL.ARRAY_BUFFER, texcoordBuffer)
 	gfx.GL.BufferData(gfx.GL.ARRAY_BUFFER, texcoords, gfx.GL.STATIC_DRAW)
 
-
 	return nil
 }
 
 func DrawTex(tex *gfx.Texture) {
+	gfx.GL.Clear(gfx.GL.COLOR_BUFFER_BIT | gfx.GL.DEPTH_BUFFER_BIT)
+
 	gfx.GL.BindTexture(gfx.GL.TEXTURE_2D, tex.Tex)
 	gfx.GL.UseProgram(texProg)
 
@@ -272,7 +253,10 @@ func DrawTex(tex *gfx.Texture) {
 	//camera?
 
 	gfx.GL.Uniform1i(textureLocation, 0)
-	gfx.GL.DrawArrays(gfx.GL.TRIANGLES, 0, 4)
+	//gfx.GL.DrawArrays(gfx.GL.TRIANGLES, 0, 6)
+	gfx.GL.DrawElements(gfx.GL.TRIANGLES, 6, gfx.GL.UNSIGNED_SHORT, 0)
+	gfx.GL.DisableVertexAttribArray(positionLocation)
+	gfx.GL.DisableVertexAttribArray(texcoordLocation)
 
 	//todo http://webglfundamentals.org/webgl/lessons/webgl-2d-drawimage.html
 	//todo 2D image view-source:http://webglfundamentals.org/webgl/webgl-2d-image.html
@@ -280,7 +264,7 @@ func DrawTex(tex *gfx.Texture) {
 
 
 
-func loadImage(img string) (*image.NRGBA, error) {
+func loadImage(img string) (*gfx.Image, error) {
 	f, err := os.Open(img)
 	if err != nil {
 		return nil, err
@@ -292,10 +276,11 @@ func loadImage(img string) (*image.NRGBA, error) {
 		return nil, err
 	}
 
-	rgba := image.NewNRGBA(i.Bounds())
-	draw.Draw(rgba, rgba.Bounds(), i, image.Point{0, 0}, draw.Src)
+	bounds := i.Bounds()
+	rgba := image.NewNRGBA(bounds)
+	draw.Draw(rgba, rgba.Bounds(), i, bounds.Min, draw.Src)
 
-	return rgba, nil
+	return gfx.NewImage(rgba), nil
 }
 
 
