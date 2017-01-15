@@ -12,9 +12,9 @@ import (
 	"prime/loop"
 
 	"image"
-	_"image/png"
-	"os"
 	"image/draw"
+	_ "image/png"
+	"os"
 )
 
 var CurrentOpts *PrimeOptions
@@ -69,7 +69,6 @@ func update(d float64) {
 	})
 	//gfx.Render(drawTriangleRender)
 }
-
 
 //TRIANGLE
 var triangleProgram *gl.Program
@@ -262,8 +261,6 @@ func DrawTex(tex *gfx.Texture) {
 	//todo 2D image view-source:http://webglfundamentals.org/webgl/webgl-2d-image.html
 }
 
-
-
 func loadImage(img string) (*gfx.Image, error) {
 	f, err := os.Open(img)
 	if err != nil {
@@ -282,7 +279,3 @@ func loadImage(img string) (*gfx.Image, error) {
 
 	return gfx.NewImage(rgba), nil
 }
-
-
-
-
