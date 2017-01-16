@@ -9,12 +9,8 @@ import (
 	"prime/gfx/gl"
 	"prime/gfx/gl/glutil"
 
+	"prime/assets"
 	"prime/loop"
-
-	"image"
-	"image/draw"
-	_ "image/png"
-	"os"
 )
 
 var CurrentOpts *PrimeOptions
@@ -38,7 +34,6 @@ func onGfxStart() {
 	log.Println("GFX Event: Start")
 
 	err := gfx.RunSafeFn(func() error {
-		InitTex()
 		t, err := GenerateTexture("./texture.png")
 		if err != nil {
 			return err
@@ -46,6 +41,7 @@ func onGfxStart() {
 
 		tex = t
 
+		InitTex()
 		return nil
 	})
 	//err := gfx.RunSafeFn(drawTriangleInit)
@@ -182,7 +178,7 @@ func drawTriangleRender() error {
 }
 
 func GenerateTexture(file string) (*gfx.Texture, error) {
-	img, err := loadImage(file)
+	img, err := assets.LoadImage(file)
 	if err != nil {
 		return nil, err
 	}
@@ -259,23 +255,4 @@ func DrawTex(tex *gfx.Texture) {
 
 	//todo http://webglfundamentals.org/webgl/lessons/webgl-2d-drawimage.html
 	//todo 2D image view-source:http://webglfundamentals.org/webgl/webgl-2d-image.html
-}
-
-func loadImage(img string) (*gfx.Image, error) {
-	f, err := os.Open(img)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	i, _, err := image.Decode(f)
-	if err != nil {
-		return nil, err
-	}
-
-	bounds := i.Bounds()
-	rgba := image.NewNRGBA(bounds)
-	draw.Draw(rgba, rgba.Bounds(), i, bounds.Min, draw.Src)
-
-	return gfx.NewImage(rgba), nil
 }
