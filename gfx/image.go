@@ -1,5 +1,7 @@
 // Created by nazarigonzalez on 15/1/17.
 
+// +build !js
+
 package gfx
 
 import "image"

@@ -12,8 +12,8 @@ import (
 	"prime/gfx"
 )
 
-func LoadImage(img string) (*gfx.Image, error) {
-	req := xhr.NewRequest("GET", img)
+func LoadImage(imgFile string) (*gfx.Image, error) {
+	req := xhr.NewRequest("GET", imgFile)
 	req.ResponseType = "blob"
 
 	if err := req.Send(nil); err != nil {
@@ -21,16 +21,16 @@ func LoadImage(img string) (*gfx.Image, error) {
 	}
 
 	if !(req.ReadyState == 4 && req.Status == 200) {
-		return nil, errors.New("Unable to load the image: " + img)
+		return nil, errors.New("Unable to load the image: " + imgFile)
 	}
 
-	i := js.Global.Get("document").Call("createElement", "img")
-	i.Set("onload", func() {
-		js.Global.Get("window").Get("URL").Call("revokeObjectURL", i.Get("src"))
+	img := js.Global.Get("document").Call("createElement", "img")
+	img.Set("onload", func() {
+		js.Global.Get("window").Get("URL").Call("revokeObjectURL", img.Get("src"))
 	})
 
-	i.Set("src", js.Global.Get("window").Get("URL").Call("createObjectURL", req.Response))
+	img.Set("src", js.Global.Get("window").Get("URL").Call("createObjectURL", req.Response))
 
-	js.Global.Get("document").Get("body").Call("appendChild", i)
-	return &gfx.Image{}, nil
+	js.Global.Get("document").Get("body").Call("appendChild", img)
+	return gfx.NewImage(img), nil
 }
