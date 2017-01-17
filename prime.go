@@ -39,7 +39,7 @@ func onGfxStart() {
 			return err
 		}
 
-		t, err := GenerateTexture("./texture.png")
+		t, err := GenerateTexture("texture.png")
 		if err != nil {
 			return err
 		}

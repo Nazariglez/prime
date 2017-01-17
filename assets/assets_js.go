@@ -13,7 +13,7 @@ import (
 )
 
 func LoadImage(imgFile string) (*gfx.Image, error) {
-	req := xhr.NewRequest("GET", imgFile)
+	req := xhr.NewRequest("GET", "assets/" + imgFile) //todo path resolve
 	req.ResponseType = "blob"
 
 	if err := req.Send(nil); err != nil {

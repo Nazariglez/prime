@@ -8,13 +8,14 @@ import (
 	"image"
 	"image/draw"
 	_ "image/png"
-	"os"
 
 	"prime/gfx"
+
+	mAsset "golang.org/x/mobile/asset"
 )
 
 func LoadImage(img string) (*gfx.Image, error) {
-	f, err := os.Open(img)
+	f, err := mAsset.Open(img)//os.Open(img)
 	if err != nil {
 		return nil, err
 	}
