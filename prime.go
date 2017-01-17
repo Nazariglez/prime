@@ -102,7 +102,7 @@ void main(){
 }*/
 
 var fst = `
-//precision mediump float;
+precision mediump float;
 
 varying vec2 v_texcoord;
 
@@ -192,7 +192,6 @@ var texProg *gl.Program
 var positionBuffer *gl.Buffer
 var texcoordBuffer *gl.Buffer
 var positionLocation int
-var colorBuffer *gl.Buffer
 var texcoordLocation int
 var textureLocation *gl.UniformLocation
 
@@ -242,15 +241,15 @@ func DrawTex(tex *gfx.Texture) {
 
 	gfx.GL.BindBuffer(gfx.GL.ARRAY_BUFFER, positionBuffer)
 	gfx.GL.EnableVertexAttribArray(positionLocation)
-	gfx.GL.VertexAttribPointer(positionLocation, 2, gfx.GL.FLOAT, false, 0, 0)
+	gfx.GL.VertexAttribPointer(positionLocation, 4, gfx.GL.FLOAT, false, 0, 0)
 	gfx.GL.BindBuffer(gfx.GL.ARRAY_BUFFER, texcoordBuffer)
 	gfx.GL.EnableVertexAttribArray(texcoordLocation)
-	gfx.GL.VertexAttribPointer(texcoordLocation, 2, gfx.GL.FLOAT, false, 0, 0)
+	gfx.GL.VertexAttribPointer(texcoordLocation, 4, gfx.GL.FLOAT, false, 0, 0)
 
 	//camera?
 	gfx.GL.Uniform1i(textureLocation, 0)
-	gfx.GL.DrawArrays(gfx.GL.TRIANGLES, 0, 6)
-	//gfx.GL.DrawElements(gfx.GL.TRIANGLES, 6, gfx.GL.UNSIGNED_SHORT, 0)
+	//gfx.GL.DrawArrays(gfx.GL.TRIANGLES, 0, 6)
+	gfx.GL.DrawElements(gfx.GL.TRIANGLES, 4, gfx.GL.UNSIGNED_SHORT, 0)
 	gfx.GL.DisableVertexAttribArray(positionLocation)
 	gfx.GL.DisableVertexAttribArray(texcoordLocation)
 
