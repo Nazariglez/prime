@@ -9,9 +9,9 @@ import (
 	"prime/gfx/gl"
 	"prime/gfx/gl/glutil"
 
+	"math/rand"
 	"prime/assets"
 	"prime/loop"
-	"math/rand"
 )
 
 var CurrentOpts *PrimeOptions
@@ -253,11 +253,11 @@ func InitTex() error {
 	return nil
 }
 
-func setRectangle(x,y,width,height int) {
+func setRectangle(x, y, width, height int) {
 	x1 := float32(x)
-	x2 := float32(x+width)
+	x2 := float32(x + width)
 	y1 := float32(y)
-	y2 := float32(y+height)
+	y2 := float32(y + height)
 
 	gfx.GL.BufferData(gfx.GL.ARRAY_BUFFER, []float32{
 		x1, y1,
@@ -271,6 +271,7 @@ func setRectangle(x,y,width,height int) {
 
 var s float32 = 255
 var pingPong = true
+
 func DrawTex(tex *gfx.Texture) {
 	gfx.GL.Clear(gfx.GL.COLOR_BUFFER_BIT | gfx.GL.DEPTH_BUFFER_BIT)
 	gfx.GL.ClearColor(
@@ -297,7 +298,7 @@ func DrawTex(tex *gfx.Texture) {
 			pingPong = false
 		}
 		s++
-	}else{
+	} else {
 		if s < 256 {
 			pingPong = true
 		}
