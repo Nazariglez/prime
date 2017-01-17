@@ -11,6 +11,7 @@ import (
 
 	"prime/assets"
 	"prime/loop"
+	"math/rand"
 )
 
 var CurrentOpts *PrimeOptions
@@ -104,27 +105,41 @@ void main(){
 var fst = `
 precision mediump float;
 
-varying vec2 v_texcoord;
+// our texture
+uniform sampler2D u_image;
 
-uniform sampler2D u_texture;
+// the texCoords passed in from the vertex shader.
+varying vec2 v_texCoord;
 
 void main() {
-	gl_FragColor = texture2D(u_texture, v_texcoord);
+   gl_FragColor = texture2D(u_image, v_texCoord);
 }
 
 `
 
 var vst = `
-attribute vec4 a_position;
-attribute vec2 a_texcoord;
+attribute vec2 a_position;
+attribute vec2 a_texCoord;
 
-uniform mat4 u_matrix;
+uniform vec2 u_resolution;
 
-varying vec2 v_texcoord;
+varying vec2 v_texCoord;
 
 void main() {
-   gl_Position = u_matrix * a_position;
-   v_texcoord = a_texcoord;
+   // convert the rectangle from pixels to 0.0 to 1.0
+   vec2 zeroToOne = a_position / u_resolution;
+
+   // convert from 0->1 to 0->2
+   vec2 zeroToTwo = zeroToOne * 2.0;
+
+   // convert from 0->2 to -1->+1 (clipspace)
+   vec2 clipSpace = zeroToTwo - 1.0;
+
+   gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+
+   // pass the texCoord to the fragment shader
+   // The GPU will interpolate this value between points.
+   v_texCoord = a_texCoord;
 }
 `
 
@@ -161,12 +176,12 @@ func drawTriangleInit() error {
 
 func drawTriangleRender() error {
 	gfx.GL.Clear(gfx.GL.COLOR_BUFFER_BIT | gfx.GL.DEPTH_BUFFER_BIT)
-	/*gfx.GLContext.ClearColor(
+	gfx.GL.ClearColor(
 		rand.Float32(),
 		rand.Float32(),
 		rand.Float32(),
 		rand.Float32(),
-	)*/
+	)
 
 	gfx.GL.UseProgram(triangleProgram)
 
@@ -194,6 +209,7 @@ var texcoordBuffer *gl.Buffer
 var positionLocation int
 var texcoordLocation int
 var textureLocation *gl.UniformLocation
+var resolutionLocation *gl.UniformLocation
 
 var positions = []float32{
 	0, 0, 0,
@@ -219,39 +235,80 @@ func InitTex() error {
 	}
 
 	positionLocation = gfx.GL.GetAttribLocation(texProg, "a_position")
-	texcoordLocation = gfx.GL.GetAttribLocation(texProg, "a_texcoord")
-	textureLocation = gfx.GL.GetUniformLocation(texProg, "u_texture")
+	texcoordLocation = gfx.GL.GetAttribLocation(texProg, "a_texCoord")
 
 	positionBuffer = gfx.GL.CreateBuffer()
 	gfx.GL.BindBuffer(gfx.GL.ARRAY_BUFFER, positionBuffer)
-	gfx.GL.BufferData(gfx.GL.ARRAY_BUFFER, positions, gfx.GL.STATIC_DRAW)
+	setRectangle(0, 0, 256, 256)
+
+	//gfx.GL.BufferData(gfx.GL.ARRAY_BUFFER, positions, gfx.GL.STATIC_DRAW)
 
 	texcoordBuffer = gfx.GL.CreateBuffer()
 	gfx.GL.BindBuffer(gfx.GL.ARRAY_BUFFER, texcoordBuffer)
 	gfx.GL.BufferData(gfx.GL.ARRAY_BUFFER, texcoords, gfx.GL.STATIC_DRAW)
 
+	resolutionLocation = gfx.GL.GetUniformLocation(texProg, "u_resolution")
+
+	//todo viewport
 	return nil
 }
 
+func setRectangle(x,y,width,height int) {
+	x1 := float32(x)
+	x2 := float32(x+width)
+	y1 := float32(y)
+	y2 := float32(y+height)
+
+	gfx.GL.BufferData(gfx.GL.ARRAY_BUFFER, []float32{
+		x1, y1,
+		x2, y1,
+		x1, y2,
+		x1, y2,
+		x2, y1,
+		x2, y2,
+	}, gfx.GL.STATIC_DRAW)
+}
+
+var s float32 = 255
+var pingPong = true
 func DrawTex(tex *gfx.Texture) {
 	gfx.GL.Clear(gfx.GL.COLOR_BUFFER_BIT | gfx.GL.DEPTH_BUFFER_BIT)
+	gfx.GL.ClearColor(
+		rand.Float32(),
+		rand.Float32(),
+		rand.Float32(),
+		rand.Float32(),
+	)
 
-	gfx.GL.BindTexture(gfx.GL.TEXTURE_2D, tex.Tex)
+	//gfx.GL.BindTexture(gfx.GL.TEXTURE_2D, tex.Tex)
 	gfx.GL.UseProgram(texProg)
 
 	gfx.GL.BindBuffer(gfx.GL.ARRAY_BUFFER, positionBuffer)
 	gfx.GL.EnableVertexAttribArray(positionLocation)
-	gfx.GL.VertexAttribPointer(positionLocation, 4, gfx.GL.FLOAT, false, 0, 0)
+	gfx.GL.VertexAttribPointer(positionLocation, 2, gfx.GL.FLOAT, false, 0, 0)
 	gfx.GL.BindBuffer(gfx.GL.ARRAY_BUFFER, texcoordBuffer)
 	gfx.GL.EnableVertexAttribArray(texcoordLocation)
-	gfx.GL.VertexAttribPointer(texcoordLocation, 4, gfx.GL.FLOAT, false, 0, 0)
+	gfx.GL.VertexAttribPointer(texcoordLocation, 2, gfx.GL.FLOAT, false, 0, 0)
 
 	//camera?
-	gfx.GL.Uniform1i(textureLocation, 0)
-	//gfx.GL.DrawArrays(gfx.GL.TRIANGLES, 0, 6)
-	gfx.GL.DrawElements(gfx.GL.TRIANGLES, 4, gfx.GL.UNSIGNED_SHORT, 0)
-	gfx.GL.DisableVertexAttribArray(positionLocation)
-	gfx.GL.DisableVertexAttribArray(texcoordLocation)
+
+	if pingPong {
+		if s > 800 {
+			pingPong = false
+		}
+		s++
+	}else{
+		if s < 256 {
+			pingPong = true
+		}
+		s--
+	}
+
+	gfx.GL.Uniform2f(resolutionLocation, s, s)
+	gfx.GL.DrawArrays(gfx.GL.TRIANGLES, 0, 6)
+	//gfx.GL.DrawElements(gfx.GL.TRIANGLES, 4, gfx.GL.UNSIGNED_SHORT, 0)
+	//gfx.GL.DisableVertexAttribArray(positionLocation)
+	//gfx.GL.DisableVertexAttribArray(texcoordLocation)
 
 	//todo http://webglfundamentals.org/webgl/lessons/webgl-2d-drawimage.html
 	//todo 2D image view-source:http://webglfundamentals.org/webgl/webgl-2d-image.html

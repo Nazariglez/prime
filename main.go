@@ -11,5 +11,6 @@ func Init(options *PrimeOptions) error {
 	return runEngine(parseOptions(options))
 }
 
-//todo thanks to ajhager && shurcooL in the readme for all the code and examples
+//todo special thanks to ajhager && shurcooL in the readme for all the code and examples
 //todo add alternatives to the readme.md
+//todo special thanks to ibon tolosana && jon valdes
