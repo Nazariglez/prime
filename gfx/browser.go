@@ -12,7 +12,7 @@ import (
 	"github.com/gopherjs/gopherjs/js"
 	"honnef.co/go/js/dom"
 
-	"prime/gfx/gl"
+	"github.com/nazariglez/prime/gfx/gl"
 )
 
 var htmlContentLoaded bool

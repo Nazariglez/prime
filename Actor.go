@@ -2,7 +2,7 @@
 
 package prime
 
-import "prime/gfx"
+import "github.com/nazariglez/prime/gfx"
 
 //todo actor pool
 

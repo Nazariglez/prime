@@ -13,7 +13,7 @@ import (
 	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/event/touch"
 
-	"prime/gfx/gl"
+	"github.com/nazariglez/prime/gfx/gl"
 )
 
 var mobileApp app.App

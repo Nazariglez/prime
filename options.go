@@ -2,7 +2,7 @@
 
 package prime
 
-import "prime/gfx"
+import "github.com/nazariglez/prime/gfx"
 
 const (
 	BROWSER_SCALE_NONE        = gfx.BROWSER_SCALE_NONE

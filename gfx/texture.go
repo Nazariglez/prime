@@ -3,7 +3,7 @@
 package gfx
 
 import (
-	"prime/gfx/gl"
+	"github.com/nazariglez/prime/gfx/gl"
 )
 
 type Texture struct {

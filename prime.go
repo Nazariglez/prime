@@ -5,13 +5,13 @@ package prime
 import (
 	"log"
 
-	"prime/gfx"
-	"prime/gfx/gl"
-	"prime/gfx/gl/glutil"
+	"github.com/nazariglez/prime/gfx"
+	"github.com/nazariglez/prime/gfx/gl"
+	"github.com/nazariglez/prime/gfx/gl/glutil"
 
+	"github.com/nazariglez/prime/assets"
+	"github.com/nazariglez/prime/loop"
 	"math/rand"
-	"prime/assets"
-	"prime/loop"
 )
 
 var CurrentOpts *PrimeOptions
@@ -102,8 +102,12 @@ void main(){
 	0, -1, 0,
 }*/
 
+//todo https://developer.mozilla.org/es/docs/Web/API/WebGL_API/WebGL_best_practices
+//todo check highp or mediump or lowp
 var fst = `
+#ifdef GL_ES
 precision mediump float;
+#endif
 
 // our texture
 uniform sampler2D u_image;

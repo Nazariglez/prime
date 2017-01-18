@@ -6,7 +6,7 @@ import (
 	"errors"
 	"log"
 
-	"prime/gfx/gl"
+	"github.com/nazariglez/prime/gfx/gl"
 )
 
 const (

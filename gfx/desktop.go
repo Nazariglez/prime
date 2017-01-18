@@ -11,7 +11,7 @@ import (
 
 	"github.com/go-gl/glfw/v3.2/glfw"
 
-	"prime/gfx/gl"
+	"github.com/nazariglez/prime/gfx/gl"
 )
 
 var win *glfw.Window

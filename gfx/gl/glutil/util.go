@@ -5,7 +5,7 @@ package glutil
 import (
 	"errors"
 
-	"prime/gfx/gl"
+	"github.com/nazariglez/prime/gfx/gl"
 )
 
 func CreateProgram(ctx *gl.Context, vertex, fragment string) (*gl.Program, error) {
