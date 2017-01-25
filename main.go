@@ -14,3 +14,4 @@ func Init(options *PrimeOptions) error {
 //todo special thanks to ajhager && shurcooL in the readme for all the code and examples
 //todo add alternatives to the readme.md
 //todo special thanks to ibon tolosana && jon valdes
+//inspired in pixi.js 2 and engi

@@ -29,7 +29,7 @@ func (a *Actor) Scale() *Point {
 	return a.scale
 }
 
-type DisplayObject interface {
+type GameObject interface {
 	Texture() *gfx.Texture
 	Bounds() *Rect
 	Scale() *Point
