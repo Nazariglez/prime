@@ -333,6 +333,10 @@ func (c *Context) ActiveTexture(texture int) {
 	c.ctx.ActiveTexture(gl2.Enum(texture))
 }
 
+func (c *Context) GetParameter(pname int) int {
+	return c.ctx.GetInteger(gl2.Enum(pname))
+}
+
 func (c *Context) ShaderSource(shader *Shader, source string) {
 	c.ctx.ShaderSource(shader.Shader, source)
 }

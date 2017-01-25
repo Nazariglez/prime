@@ -724,8 +724,9 @@ func (c *Context) GetBufferParameter(target, pname int) int {
 
 // TODO: Create type specific variations.
 // Returns the natural type value for a constant parameter.
-func (c *Context) GetParameter(pname int) *js.Object {
-	return c.Call("getParameter", pname)
+func (c *Context) GetParameter(pname int) int {
+	//todo https://developer.mozilla.org/en-US/docs/Web/API/WebGLRenderingContext/getParameter
+	return c.Call("getParameter", pname).Int()
 }
 
 // Returns a value for the WebGL error flag and clears the flag.

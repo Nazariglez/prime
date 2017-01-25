@@ -326,6 +326,12 @@ func (c *Context) CreateShader(typ int) *Shader {
 	return shader
 }
 
+func (c *Context) GetParameter(pname int) int {
+	var data int32
+	gl2.GetIntegerv(uint32(pname), &data)
+	return int(data)
+}
+
 func (c *Context) ActiveTexture(texture int) {
 	gl2.ActiveTexture(uint32(texture))
 }
