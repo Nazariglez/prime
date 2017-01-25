@@ -46,7 +46,7 @@ func initialize() error {
 
 	GL = ctx
 
-	go OnStart()
+	go contextStarted()
 
 	return RunSafeReader()
 }

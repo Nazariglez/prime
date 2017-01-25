@@ -44,7 +44,7 @@ func run() error {
 
 						GL = c
 
-						go OnStart()
+						go contextStarted()
 
 					case lifecycle.CrossOff:
 						OnEnd()

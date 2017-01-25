@@ -70,7 +70,7 @@ func run(canvas *dom.HTMLCanvasElement) error {
 	GL = ctx
 
 	go RunSafeReader()
-	go OnStart()
+	go contextStarted()
 
 	js.Global.Set("ctx", ctx)               //todo remove this
 	ctx.Viewport(0, 0, gfxWidth, gfxHeight) //todo fix this, retina issues (removed from here)

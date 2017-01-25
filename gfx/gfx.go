@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/nazariglez/prime/gfx/gl"
+	"github.com/nazariglez/prime/gfx/gl/glutil"
 )
 
 const (
@@ -29,6 +30,8 @@ var (
 
 	OnStart = func() { log.Println("GFX Event: Start") }
 	OnEnd   = func() { log.Println("GFX Event: End") }
+
+	MAX_TEXTURES int
 )
 
 func Init(width, height int, title string, scale int) error {
@@ -38,6 +41,20 @@ func Init(width, height int, title string, scale int) error {
 	gfxScale = scale
 
 	return initialize()
+}
+
+func contextStarted() {
+	err := RunSafeFn(func() error {
+		MAX_TEXTURES = glutil.GetMaxTextures(GL)
+		//todo initialize everything
+		return nil
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	OnStart()
 }
 
 func Close(err error) {
@@ -94,3 +111,4 @@ func RunSafeFn(f func() error) error {
 
 	return <-w
 }
+

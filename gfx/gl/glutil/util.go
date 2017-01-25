@@ -6,6 +6,8 @@ import (
 	"errors"
 
 	"github.com/nazariglez/prime/gfx/gl"
+	"strings"
+	"strconv"
 )
 
 func CreateProgram(ctx *gl.Context, vertex, fragment string) (*gl.Program, error) {
@@ -47,4 +49,52 @@ func loadShader(ctx *gl.Context, typ int, source string) (*gl.Shader, error) {
 	}
 
 	return s, nil
+}
+
+var fragTestIfs = `
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+void main(){
+	float test = 0.1;
+	%loop%
+	gl_FragColor = vec4(0.0);
+}
+`
+
+func GetMaxTextures(ctx *gl.Context) int {
+	max := ctx.GetParameter(ctx.MAX_TEXTURE_IMAGE_UNITS)
+	shader := ctx.CreateShader(ctx.FRAGMENT_SHADER)
+	defer ctx.DeleteShader(shader)
+
+	for {
+		f := strings.Replace(fragTestIfs, "%loop%", generateIfsTest(max), -1)
+		ctx.ShaderSource(shader, f)
+		ctx.CompileShader(shader)
+		if !ctx.GetShaderParameterb(shader, ctx.COMPILE_STATUS) {
+			max /= 2
+		} else {
+			break
+		}
+
+		return max
+	}
+
+	return max
+}
+
+func generateIfsTest(max int) string {
+	str := ""
+	for i := 0; i < max; i++ {
+		if i > 0 {
+			str += "\nelse "
+		}
+
+		if i < max - 1 {
+			str += "if(test == " + strconv.Itoa(i) + ".0){}"
+		}
+	}
+
+	return str
 }
