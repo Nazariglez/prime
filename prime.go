@@ -35,6 +35,10 @@ func onGfxStart() {
 	log.Println("GFX Event: Start")
 
 	err := gfx.RunSafeFn(func() error {
+
+		log.Println(gfx.MAX_TEXTURES);
+
+
 		if err := InitTex(); err != nil {
 			return err
 		}
@@ -106,7 +110,7 @@ void main(){
 //todo check highp or mediump or lowp
 var fst = `
 #ifdef GL_ES
-precision mediump float;
+precision highp float;
 #endif
 
 // our texture
