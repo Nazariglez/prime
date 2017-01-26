@@ -9,9 +9,9 @@ package gl
 import (
 	"image"
 	"reflect"
+	"strings"
 
 	gl2 "github.com/go-gl/gl/v2.1/gl"
-	"strings"
 )
 
 type Texture struct{ uint32 }
@@ -447,7 +447,7 @@ func (c *Context) GetAttribLocation(program *Program, name string) int {
 func (c *Context) GetActiveAttrib(program *Program, index int) (name string, size, typ int) {
 	var l, s int32
 	var t uint32
-	n := *gl2.Str(" \x00")
+	n := *gl2.Str("             \x00")
 	gl2.GetActiveAttrib(program.uint32, uint32(index), 256, &l, &s, &t, &n)
 	name = gl2.GoStr(&n)
 	typ = int(t)
