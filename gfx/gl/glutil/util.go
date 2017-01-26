@@ -4,10 +4,10 @@ package glutil
 
 import (
 	"errors"
-
-	"github.com/nazariglez/prime/gfx/gl"
 	"strings"
 	"strconv"
+
+	"github.com/nazariglez/prime/gfx/gl"
 )
 
 func CreateProgram(ctx *gl.Context, vertex, fragment string) (*gl.Program, error) {
@@ -77,8 +77,6 @@ func GetMaxTextures(ctx *gl.Context) int {
 		} else {
 			break
 		}
-
-		return max
 	}
 
 	return max

@@ -46,7 +46,7 @@ func Init(width, height int, title string, scale int) error {
 func contextStarted() {
 	err := RunSafeFn(func() error {
 		MAX_TEXTURES = glutil.GetMaxTextures(GL)
-		//todo initialize everything
+		//todo initialize everything, like shaders
 		return nil
 	})
 
@@ -111,4 +111,3 @@ func RunSafeFn(f func() error) error {
 
 	return <-w
 }
-

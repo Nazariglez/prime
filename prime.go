@@ -37,6 +37,7 @@ func onGfxStart() {
 	err := gfx.RunSafeFn(func() error {
 
 		log.Println(gfx.MAX_TEXTURES);
+		_ = gfx.CreateMultiTextureShader()
 
 
 		if err := InitTex(); err != nil {
@@ -126,6 +127,9 @@ void main() {
 `
 
 var vst = `
+#ifdef GL_ES
+precision highp float;
+#endif
 attribute vec2 a_position;
 attribute vec2 a_texCoord;
 
