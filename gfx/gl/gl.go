@@ -11,6 +11,7 @@ type BaseContext struct {
 	ARRAY_BUFFER                                 int `js:"ARRAY_BUFFER"`
 	ARRAY_BUFFER_BINDING                         int `js:"ARRAY_BUFFER_BINDING"`
 	ATTACHED_SHADERS                             int `js:"ATTACHED_SHADERS"`
+	ACTIVE_ATTRIBUTES														 int `js:"ACTIVE_ATTRIBUTES"`
 	BACK                                         int `js:"BACK"`
 	BLEND                                        int `js:"BLEND"`
 	BLEND_COLOR                                  int `js:"BLEND_COLOR"`

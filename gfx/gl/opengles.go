@@ -38,6 +38,7 @@ func NewContext(drawCtx interface{}) (*Context, error) {
 			ARRAY_BUFFER:               gl2.ARRAY_BUFFER,
 			ARRAY_BUFFER_BINDING:       gl2.ARRAY_BUFFER_BINDING,
 			ATTACHED_SHADERS:           gl2.ATTACHED_SHADERS,
+			ACTIVE_ATTRIBUTES:					gl2.ACTIVE_ATTRIBUTES,
 			BACK:                       gl2.BACK,
 			BLEND:                      gl2.BLEND,
 			BLEND_COLOR:                gl2.BLEND_COLOR,
@@ -365,6 +366,10 @@ func (c *Context) GetShaderParameterb(shader *Shader, pname int) bool {
 	return c.ctx.GetShaderi(shader.Shader, gl2.Enum(pname)) == gl2.TRUE
 }
 
+func (c *Context) GetProgramParameteri(program *Program, pname int) int {
+	return c.ctx.GetProgrami(program.Program, gl2.Enum(pname))
+}
+
 func (c *Context) GetProgramParameterb(program *Program, pname int) bool {
 	return c.ctx.GetProgrami(program.Program, gl2.Enum(pname)) == gl2.TRUE
 }
@@ -421,6 +426,12 @@ func (c *Context) TexImage2D(target, level, internalFormat, format, kind int, da
 func (c *Context) GetAttribLocation(program *Program, name string) int {
 	//return int(gl2.GetAttribLocation(program.uint32, gl2.Str(name+"\x00")))
 	return int(c.ctx.GetAttribLocation(program.Program, name).Value) //todo add \x00?
+}
+
+func (c *Context) GetActiveAttrib(program *Program, index int) (name string, size, typ int) {
+	name, size, typ = c.ctx.GetActiveAttrib(program, uint32(index))
+	typ = int(typ)
+	return
 }
 
 func (c *Context) GetUniformLocation(program *Program, name string) *UniformLocation {

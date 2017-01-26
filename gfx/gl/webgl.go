@@ -57,6 +57,7 @@ type Context struct { //todo extend from BaseContext (problems with js tags [cou
 	ARRAY_BUFFER                                 int `js:"ARRAY_BUFFER"`
 	ARRAY_BUFFER_BINDING                         int `js:"ARRAY_BUFFER_BINDING"`
 	ATTACHED_SHADERS                             int `js:"ATTACHED_SHADERS"`
+	ACTIVE_ATTRIBUTES														 int `js:"ACTIVE_ATTRIBUTES"`
 	BACK                                         int `js:"BACK"`
 	BLEND                                        int `js:"BLEND"`
 	BLEND_COLOR                                  int `js:"BLEND_COLOR"`
@@ -692,8 +693,12 @@ func (c *Context) GenerateMipmap(target int) {
 
 // Returns an WebGLActiveInfo object containing the size, type, and name
 // of a vertex attribute at a specific index position in a program object.
-func (c *Context) GetActiveAttrib(program *Program, index int) string {
-	return c.Call("getActiveAttrib", program.Object, index).String()
+func (c *Context) GetActiveAttrib(program *Program, index int) (name string, size, typ int) {
+	d := c.Call("getActiveAttrib", program.Object, index)
+	name = d.Get("name").String()
+	size = d.Get("size").Int()
+	typ = d.Get("type").Int()
+	return
 }
 
 // Returns an WebGLActiveInfo object containing the size, type, and name

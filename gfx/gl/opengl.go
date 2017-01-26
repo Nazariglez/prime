@@ -34,6 +34,7 @@ func NewContext() (*Context, error) {
 		BaseContext{
 			ARRAY_BUFFER:               gl2.ARRAY_BUFFER,
 			ARRAY_BUFFER_BINDING:       gl2.ARRAY_BUFFER_BINDING,
+			ACTIVE_ATTRIBUTES:					gl2.ACTIVE_ATTRIBUTES,
 			ATTACHED_SHADERS:           gl2.ATTACHED_SHADERS,
 			BACK:                       gl2.BACK,
 			BLEND:                      gl2.BLEND,
@@ -374,6 +375,12 @@ func (c *Context) GetProgramParameterb(program *Program, pname int) bool {
 	return r == gl2.TRUE
 }
 
+func (c *Context) GetProgramParameteri(program *Program, pname int) int {
+	var r int32
+	gl2.GetProgramiv(program.uint32, uint32(pname), &r)
+	return int(r)
+}
+
 func (c *Context) GetShaderInfoLog(shader *Shader) string {
 	var l int32
 	gl2.GetShaderiv(shader.uint32, gl2.INFO_LOG_LENGTH, &l)
@@ -435,6 +442,17 @@ func (c *Context) TexImage2D(target, level, internalFormat, format, kind int, da
 
 func (c *Context) GetAttribLocation(program *Program, name string) int {
 	return int(gl2.GetAttribLocation(program.uint32, gl2.Str(name+"\x00")))
+}
+
+func (c *Context) GetActiveAttrib(program *Program, index int) (name string, size, typ int) {
+	var l, s int32
+	var t uint32
+	n := *gl2.Str(" \x00")
+	gl2.GetActiveAttrib(program.uint32, uint32(index), 256, &l, &s, &t, &n)
+	name = gl2.GoStr(&n)
+	typ = int(t)
+	size = int(s)
+	return
 }
 
 func (c *Context) GetUniformLocation(program *Program, name string) *UniformLocation {
